@@ -240,17 +240,30 @@ if spara_tid:
         st.success("Skoldagens inställningar sparade!")
     except ValueError:
         st.error("Felaktigt tidsformat. Använd HH:MM")
-        # === 5. TEST: SCHEMAGENERERING (en lärare, en klass) ===
+        # === 5. SCHEMAGENERERING – TEST ===
 st.header("5. Schemagenerering – testkörning")
 
-if "daginst" in st.session_state and st.session_state.larare_data:
+# Hjälpfunktion: välj rätt sal
+def hitta_sal(amne, klass):
+    # Hemklassrumsämnen
+    if amne in ["SO", "MA", "ENG", "SV"]:
+        for sal in st.session_state.sal_data:
+            if sal["typ"] == "Hemklassrum" and sal["klass"] == klass:
+                return sal["sal"]
+    else:
+        for sal in st.session_state.sal_data:
+            if sal["typ"] == "Ämnesklassrum" and sal["ämne"] == amne:
+                return sal["sal"]
+    return "?"
+
+if "daginst" in st.session_state and st.session_state.larare_data and "sal_data" in st.session_state:
     daginst = st.session_state.daginst
     starttid = datetime.datetime.combine(datetime.date.today(), daginst["starttid"])
     sluttider = {dag: datetime.datetime.combine(datetime.date.today(), t) for dag, t in daginst["sluttider"].items()}
     lek_min = daginst["lek_min"]
     rast_min = daginst["rast_min"]
 
-    # Testdata: välj första läraren
+    # Välj första läraren som test
     larare = st.session_state.larare_data[0]
     kvar_minuter = larare["minuter_per_vecka"]
     schema = []
@@ -259,14 +272,18 @@ if "daginst" in st.session_state and st.session_state.larare_data:
         tid = starttid
         while tid + datetime.timedelta(minutes=lek_min) <= sluttider[dag] and kvar_minuter >= lek_min:
             slut = tid + datetime.timedelta(minutes=lek_min)
+            klass = larare["klasser"][0]
+            ämne = larare["ämne"]
+            sal = hitta_sal(ämne, klass)
 
             schema.append({
                 "dag": dag,
                 "start": tid.time().strftime("%H:%M"),
                 "slut": slut.time().strftime("%H:%M"),
-                "klass": larare["klasser"][0],  # första klass
-                "ämne": larare["ämne"],
-                "lärare": larare["id"]
+                "klass": klass,
+                "ämne": ämne,
+                "lärare": larare["id"],
+                "sal": sal
             })
 
             kvar_minuter -= lek_min
@@ -277,4 +294,4 @@ if "daginst" in st.session_state and st.session_state.larare_data:
     st.dataframe(df)
 
 else:
-    st.info("Lägg till minst en lärare och spara skolinställningar först.")
+    st.info("Lägg till minst en lärare, salar och spara skolinställningar först.")
