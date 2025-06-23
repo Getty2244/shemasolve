@@ -29,7 +29,7 @@ for amne in amnen:
     with col2:
         st.write(st.session_state.temp_farg_val[amne])
 
-if st.button("Spara färger"):
+if st.button("Spara färger", key="spara_farger_knapp"):
     st.session_state.farg_val = st.session_state.temp_farg_val.copy()
     st.success("Färger sparade!")
 
