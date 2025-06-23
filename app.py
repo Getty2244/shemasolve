@@ -43,18 +43,18 @@ with st.form("larare_form"):
     larar_klasser = st.multiselect("Undervisar i klasser", options=klasser)
     arbetsdagar = st.multiselect("Arbetsdagar", options=dagar_val, default=dagar_val)
 
-    with st.expander("ℹ️ Se exempel på vanliga önskemål"):
-        st.markdown("""
-        **Exempel på extra önskemål:**
-        - Undvik SO på måndagar  
-        - Idrott helst efter lunch  
-        - NO bör ej ligga första lektionen  
-        - Engelska i följd om möjligt  
-        - Fredagar helst undervisningsfri  
-        - Matte inte alla dagar i rad  
-        - Slöjd ska ej vara efter idrott  
-        - Mentorstid varje tisdag 10:00
-        """)
+   with st.expander("ℹ️ Se exempel på vanliga önskemål"):
+    st.markdown("""
+    **Exempel på extra önskemål:**
+    - Undvik SO på måndagar  
+    - Idrott helst efter lunch  
+    - NO bör ej ligga första lektionen  
+    - Engelska i följd om möjligt  
+    - Fredagar helst undervisningsfri  
+    - Matte inte alla dagar i rad  
+    - Slöjd ska ej vara efter idrott  
+    - Mentorstid varje tisdag 10:00
+    """)
 
     onskemal = st.text_area("Extra önskemål (valfritt)")
     skicka = st.form_submit_button("Lägg till lärare")
