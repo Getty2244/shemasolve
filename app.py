@@ -63,7 +63,7 @@ if st.session_state.larare_data:
         with col2:
             if st.button("❌ Ta bort", key=f"remove_larare_{i}"):
                 st.session_state.larare_data.pop(i)
-                st.experimental_rerun()
+                st.rerun()
 
 # === 3. LÄGG TILL SAL ===
 st.header("3. Lägg till sal")
@@ -111,7 +111,7 @@ if st.session_state.sal_data:
         with col2:
             if st.button("❌ Ta bort", key=f"remove_sal_{i}"):
                 st.session_state.sal_data.pop(i)
-                st.experimental_rerun()
+                st.rerun()
 
 # === 4. EXEMPELSCHEMA ===
 st.header("4. Exempelschema med färgade ämnen")
