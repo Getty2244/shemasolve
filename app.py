@@ -34,6 +34,7 @@ st.header("2. Lägg till lärare")
 with st.form("lärare_form"):
     larar_id = st.text_input("Lärar-ID (ex: bgk1)")
     amne = st.selectbox("Ämne", options=amnen)
+    undervisningstid = st.number_input("Undervisningsminuter per vecka", min_value=0, step=10)
     klasser = st.multiselect("Undervisar i klasser", options=["7a", "7b", "8a", "8b", "9a", "9b"])
     dagar = st.multiselect("Arbetsdagar", options=["Mon", "Tue", "Wed", "Thu", "Fri"])
     skicka = st.form_submit_button("Lägg till lärare")
@@ -41,12 +42,13 @@ with st.form("lärare_form"):
 if "larare_data" not in st.session_state:
     st.session_state.larare_data = []
 
-if skicka and larar_id and amne and klasser and dagar:
+if skicka and larar_id and amne and klasser and dagar and undervisningstid > 0:
     ny_larare = {
         "id": larar_id,
         "ämne": amne,
         "klasser": klasser,
-        "dagar": dagar
+        "dagar": dagar,
+        "minuter_per_vecka": undervisningstid
     }
     st.session_state.larare_data.append(ny_larare)
     st.success(f"Lärare {larar_id} tillagd!")
@@ -66,7 +68,7 @@ data = {
 }
 df = pd.DataFrame(data)
 
-# Färglägg celler i ämneskolumnen
+# Färglägg ämnesceller
 def color_amne(val):
     return f"background-color: {st.session_state.farg_val.get(val, '#FFFFFF')};"
 
