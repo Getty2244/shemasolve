@@ -3,7 +3,7 @@ import pandas as pd
 import datetime
 
 # === ÄMNEN OCH KLASSER ===
-amnen = ["SO", "MA", ""NO", "SV", "ENG", "IDROTT", "TRÄSLÖJD", "SY", "HK"]
+amnen = ["SO", "MA", "NO", "SV", "ENG", "IDROTT", "TRÄSLÖJD", "SY", "HK"]
 klasser = ["7a", "7b", "8a", "8b", "9a", "9b"]
 dagar_val = ["Mon", "Tue", "Wed", "Thu", "Fri"]
 
