@@ -39,6 +39,10 @@ st.header("2. Lägg till lärare")
 with st.form("larare_form"):
     larar_id = st.text_input("Lärar-ID (ex: bgk1)")
     amne = st.selectbox("Ämne", options=amnen)
+    undervisningstid = st.number_input("Undervisningsminuter per vecka", min_value=0, step=10)
+    larar_klasser = st.multiselect("Undervisar i klasser", options=klasser)
+    arbetsdagar = st.multiselect("Arbetsdagar", options=dagar_val, default=dagar_val)
+    onskemal = st.text_area("Extra önskemål (valfritt)")
 
     with st.expander("ℹ️ Se exempel på vanliga önskemål"):
         st.markdown("""
@@ -53,10 +57,6 @@ with st.form("larare_form"):
         - Mentorstid varje tisdag 10:00
         """)
 
-    undervisningstid = st.number_input("Undervisningsminuter per vecka", min_value=0, step=10)
-    larar_klasser = st.multiselect("Undervisar i klasser", options=klasser)
-    arbetsdagar = st.multiselect("Arbetsdagar", options=dagar_val, default=dagar_val)
-    onskemal = st.text_area("Extra önskemål (valfritt)")
     skicka = st.form_submit_button("Lägg till lärare")
 
 if "larare_data" not in st.session_state:
@@ -77,17 +77,23 @@ if skicka and larar_id and amne and larar_klasser and arbetsdagar and undervisni
 # === Visa inlagda lärare ===
 st.subheader("📋 Inlagda lärare")
 if st.session_state.larare_data:
-    for larare in st.session_state.larare_data:
+    for i, larare in enumerate(st.session_state.larare_data):
         onskemal_text = larare.get("önskemål", "")
-        st.markdown(f"""
-        - **{larare['id']}** ({larare['ämne']})  
-          Klasser: {', '.join(larare['klasser'])}  
-          Dagar: {', '.join(larare['dagar'])}  
-          Minuter/vecka: {larare['minuter_per_vecka']}  
-          Önskemål: _{onskemal_text}_  
-        """)
+        col1, col2 = st.columns([5, 1])
+        with col1:
+            st.markdown(f"""
+            - **{larare['id']}** ({larare['ämne']})  
+              Klasser: {', '.join(larare['klasser'])}  
+              Dagar: {', '.join(larare['dagar'])}  
+              Minuter/vecka: {larare['minuter_per_vecka']}  
+              Önskemål: _{onskemal_text}_
+            """)
+        with col2:
+            if st.button("✏️ Redigera", key=f"redigera_larare_{i}"):
+                st.info("Redigering av lärare kommer snart!")
 else:
     st.info("Inga lärare tillagda ännu.")
+
 
 # === 3. LÄGG TILL SAL ===
 st.header("3. Lägg till sal")
