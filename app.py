@@ -31,12 +31,14 @@ if st.button("Spara färger"):
 # === Lägg till lärare ===
 st.header("2. Lägg till lärare")
 
+dagar_val = ["Mon", "Tue", "Wed", "Thu", "Fri"]
+
 with st.form("lärare_form"):
     larar_id = st.text_input("Lärar-ID (ex: bgk1)")
     amne = st.selectbox("Ämne", options=amnen)
     undervisningstid = st.number_input("Undervisningsminuter per vecka", min_value=0, step=10)
     klasser = st.multiselect("Undervisar i klasser", options=["7a", "7b", "8a", "8b", "9a", "9b"])
-    dagar = st.multiselect("Arbetsdagar", options=["Mon", "Tue", "Wed", "Thu", "Fri"])
+    dagar = st.multiselect("Arbetsdagar", options=dagar_val, default=dagar_val)
     skicka = st.form_submit_button("Lägg till lärare")
 
 if "larare_data" not in st.session_state:
@@ -58,7 +60,7 @@ if st.session_state.larare_data:
     st.write("### Inlagda lärare:")
     st.table(st.session_state.larare_data)
 
-# === Testschema att visa med färger ===
+# === Exempelschema ===
 st.header("3. Exempelschema med färgade ämnen")
 
 data = {
@@ -68,7 +70,6 @@ data = {
 }
 df = pd.DataFrame(data)
 
-# Färglägg ämnesceller
 def color_amne(val):
     return f"background-color: {st.session_state.farg_val.get(val, '#FFFFFF')};"
 
