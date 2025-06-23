@@ -53,19 +53,26 @@ if skicka and larar_id and amne and larar_klasser and arbetsdagar and undervisni
     st.session_state.larare_data.append(ny_larare)
     st.success(f"Lärare {larar_id} tillagd!")
 
+# Visa lärare med borttagningsknapp
 if st.session_state.larare_data:
     st.write("### Inlagda lärare:")
-    st.table(st.session_state.larare_data)
+    for i, larare in enumerate(st.session_state.larare_data):
+        col1, col2 = st.columns([5, 1])
+        with col1:
+            st.write(f"**{larare['id']}** – {larare['ämne']} – klasser: {', '.join(larare['klasser'])} – {larare['minuter_per_vecka']} min/vecka")
+        with col2:
+            if st.button("❌ Ta bort", key=f"remove_larare_{i}"):
+                st.session_state.larare_data.pop(i)
+                st.experimental_rerun()
 
 # === 3. LÄGG TILL SAL ===
 st.header("3. Lägg till sal")
 
-# Välj saltyp utanför formuläret – gör layouten reaktiv
+# Välj saltyp utanför formuläret
 sal_typ = st.radio("Typ av sal", options=["Hemklassrum", "Ämnesklassrum"], horizontal=True)
 
 with st.form("sal_form"):
     sal_namn = st.text_input("Salnamn (t.ex. A101, NO-labb)")
-
     sal_klass = None
     sal_amne = None
 
@@ -89,9 +96,22 @@ if sal_submit and sal_namn:
     st.session_state.sal_data.append(ny_sal)
     st.success(f"Sal {sal_namn} tillagd!")
 
+# Visa salar med borttagningsknapp
 if st.session_state.sal_data:
     st.write("### Inlagda salar:")
-    st.table(st.session_state.sal_data)
+    for i, sal in enumerate(st.session_state.sal_data):
+        col1, col2 = st.columns([5, 1])
+        with col1:
+            info = f"{sal['sal']} – {sal['typ']}"
+            if sal["klass"]:
+                info += f", klass: {sal['klass']}"
+            if sal["ämne"]:
+                info += f", ämne: {sal['ämne']}"
+            st.write(info)
+        with col2:
+            if st.button("❌ Ta bort", key=f"remove_sal_{i}"):
+                st.session_state.sal_data.pop(i)
+                st.experimental_rerun()
 
 # === 4. EXEMPELSCHEMA ===
 st.header("4. Exempelschema med färgade ämnen")
