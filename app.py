@@ -5,10 +5,27 @@ st.title("AI-schemaplanerare för skolan")
 st.write("Ladda upp lärardata, salar, lektionslängder och önskemål.")
 st.write("Detta är en plats för din schemagenerator.")
 
+ämnen = [
+    "Svenska",
+    "Engelska",
+    "Matematik",
+    "SO (inkl. Religion)",
+    "NO",
+    "Idrott",
+    "Slöjd",
+    "Hemkunskap",
+    "Spanska",
+    "Franska",
+    "Tyska",
+    "Bild",
+    "Musik",
+    "Teknik"
+]
+
 st.header("Lärare")
 with st.form(key='teacher_form'):
     namn = st.text_input("Lärarens namn")
-    ämne = st.selectbox("Ämne", ["Svenska", "Engelska", "Matematik", "SO", "NO", "Idrott", "Slöjd", "Hemkunskap"])
+    ämne = st.selectbox("Ämne", ämnen)
     klasser = st.multiselect("Klasser", ["7a", "7b", "8a", "8b", "9a", "9b"])
     arbetsdagar = st.multiselect(
         "Arbetsdagar", 
