@@ -17,9 +17,17 @@ data = [
     ["Tue", "11:00-11:45", "9a", "bgk2", "MA"],
 ]
 
-# Skapa DataFrame
 df = pd.DataFrame(data, columns=["Dag", "Tid", "Klass", "Lärare", "Ämne"])
 
-# Visa i Streamlit som tabell
-st.write("### Schema")
-st.dataframe(df)
+# Skapa en "cell" med ämne + klass + lärare
+df["Info"] = df.apply(lambda r: f"{r['Ämne']} {r['Klass']} ({r['Lärare']})", axis=1)
+
+# Gör en pivottabell: rader = Tid, kolumner = Dag, värde = Info
+pivot = df.pivot(index="Tid", columns="Dag", values="Info")
+
+# Byt ordning på dagarna så det blir måndag-fredag (de dagar som finns)
+order = ["Mon", "Tue", "Wed", "Thu", "Fri"]
+pivot = pivot.reindex(columns=order)
+
+st.write("### Schema (dagar som kolumner, tider som rader)")
+st.dataframe(pivot.fillna(""))  # Fyll tomma celler med tomt sträng
