@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import datetime
 
 # === ÄMNEN OCH KLASSER ===
 amnen = ["SO", "MA", "NO", "SV", "ENG", "IDROTT", "TRÄSLÖJD", "SY", "HK"]
@@ -173,3 +174,29 @@ for i, sal in enumerate(st.session_state.sal_data):
             if st.button("✏️ Redigera", key=f"redigera_sal_{i}"):
                 st.session_state.redigera_sal_index = i
                 st.rerun()
+
+# === 4. SKOLDAGENS INSTÄLLNINGAR ===
+st.header("4. Inställningar för skoldagen")
+
+with st.form("daginst_form"):
+    starttid = st.time_input("Skoldagens starttid", value=datetime.time(8, 30))
+    sluttid = st.time_input("Skoldagens sluttid", value=datetime.time(15, 0))
+    lunchmin = st.number_input("Lunchrastens längd (min)", min_value=20, max_value=60, value=40)
+    lek_min = st.number_input("Minsta lektionslängd (min)", min_value=30, max_value=60, value=40)
+    lek_max = st.number_input("Max lektionslängd (min)", min_value=60, max_value=90, value=60)
+    rast_min = st.number_input("Minsta rast (min)", min_value=5, max_value=15, value=5)
+    rast_max = st.number_input("Största rast (min)", min_value=10, max_value=30, value=15)
+    
+    spara_tid = st.form_submit_button("Spara inställningar")
+
+if spara_tid:
+    st.session_state.daginst = {
+        "starttid": starttid,
+        "sluttid": sluttid,
+        "lunch": lunchmin,
+        "lek_min": lek_min,
+        "lek_max": lek_max,
+        "rast_min": rast_min,
+        "rast_max": rast_max
+    }
+    st.success("Skoldagens inställningar sparade!")
