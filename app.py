@@ -62,6 +62,9 @@ with st.form("larare_form"):
 if "larare_data" not in st.session_state:
     st.session_state.larare_data = []
 
+if "redigera_larare_index" not in st.session_state:
+    st.session_state.redigera_larare_index = None
+
 if skicka and larar_id and amne and larar_klasser and arbetsdagar and undervisningstid > 0:
     ny_larare = {
         "id": larar_id,
@@ -74,23 +77,53 @@ if skicka and larar_id and amne and larar_klasser and arbetsdagar and undervisni
     st.session_state.larare_data.append(ny_larare)
     st.success(f"Lärare {larar_id} tillagd!")
 
-# === Visa inlagda lärare ===
+# === Visa/redigera inlagda lärare ===
 st.subheader("📋 Inlagda lärare")
 if st.session_state.larare_data:
     for i, larare in enumerate(st.session_state.larare_data):
-        onskemal_text = larare.get("önskemål", "")
-        col1, col2 = st.columns([5, 1])
-        with col1:
-            st.markdown(f"""
-            - **{larare['id']}** ({larare['ämne']})  
-              Klasser: {', '.join(larare['klasser'])}  
-              Dagar: {', '.join(larare['dagar'])}  
-              Minuter/vecka: {larare['minuter_per_vecka']}  
-              Önskemål: _{onskemal_text}_
-            """)
-        with col2:
-            if st.button("✏️ Redigera", key=f"redigera_larare_{i}"):
-                st.info("Redigering av lärare kommer snart!")
+        if st.session_state.redigera_larare_index == i:
+            st.write(f"✏️ Redigerar lärare **{larare['id']}**")
+            nytt_id = st.text_input("Lärar-ID", value=larare["id"], key=f"edit_id_{i}")
+            nytt_amne = st.selectbox("Ämne", options=amnen, index=amnen.index(larare["ämne"]), key=f"edit_amne_{i}")
+            nya_klasser = st.multiselect("Klasser", options=klasser, default=larare["klasser"], key=f"edit_klass_{i}")
+            nya_dagar = st.multiselect("Arbetsdagar", options=dagar_val, default=larare["dagar"], key=f"edit_dagar_{i}")
+            nya_minuter = st.number_input("Undervisningsminuter/vecka", value=larare["minuter_per_vecka"], min_value=0, step=10, key=f"edit_min_{i}")
+            nya_onskemal = st.text_area("Extra önskemål", value=larare.get("önskemål", ""), key=f"edit_onskemal_{i}")
+
+            if st.button("💾 Spara", key=f"spara_{i}"):
+                st.session_state.larare_data[i] = {
+                    "id": nytt_id,
+                    "ämne": nytt_amne,
+                    "klasser": nya_klasser,
+                    "dagar": nya_dagar,
+                    "minuter_per_vecka": nya_minuter,
+                    "önskemål": nya_onskemal
+                }
+                st.session_state.redigera_larare_index = None
+                st.rerun()
+
+            if st.button("❌ Ta bort", key=f"ta_bort_{i}"):
+                st.session_state.larare_data.pop(i)
+                st.session_state.redigera_larare_index = None
+                st.rerun()
+
+            if st.button("Avbryt", key=f"avbryt_{i}"):
+                st.session_state.redigera_larare_index = None
+                st.rerun()
+        else:
+            col1, col2 = st.columns([5, 1])
+            with col1:
+                st.markdown(f"""
+                - **{larare['id']}** ({larare['ämne']})  
+                  Klasser: {', '.join(larare['klasser'])}  
+                  Dagar: {', '.join(larare['dagar'])}  
+                  Minuter/vecka: {larare['minuter_per_vecka']}  
+                  Önskemål: _{larare.get('önskemål', '')}_  
+                """)
+            with col2:
+                if st.button("✏️ Redigera", key=f"redigera_larare_{i}"):
+                    st.session_state.redigera_larare_index = i
+                    st.rerun()
 else:
     st.info("Inga lärare tillagda ännu.")
 
