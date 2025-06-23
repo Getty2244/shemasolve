@@ -42,6 +42,21 @@ with st.form("larare_form"):
     undervisningstid = st.number_input("Undervisningsminuter per vecka", min_value=0, step=10)
     larar_klasser = st.multiselect("Undervisar i klasser", options=klasser)
     arbetsdagar = st.multiselect("Arbetsdagar", options=dagar_val, default=dagar_val)
+
+    with st.expander("ℹ️ Se exempel på vanliga önskemål"):
+        st.markdown("""
+        **Exempel på extra önskemål:**
+        - Undvik SO på måndagar  
+        - Idrott helst efter lunch  
+        - NO bör ej ligga första lektionen  
+        - Engelska i följd om möjligt  
+        - Fredagar helst undervisningsfri  
+        - Matte inte alla dagar i rad  
+        - Slöjd ska ej vara efter idrott  
+        - Mentorstid varje tisdag 10:00
+        """)
+
+    onskemal = st.text_area("Extra önskemål (valfritt)")
     skicka = st.form_submit_button("Lägg till lärare")
 
 if "larare_data" not in st.session_state:
@@ -53,7 +68,8 @@ if skicka and larar_id and amne and larar_klasser and arbetsdagar and undervisni
         "ämne": amne,
         "klasser": larar_klasser,
         "dagar": arbetsdagar,
-        "minuter_per_vecka": undervisningstid
+        "minuter_per_vecka": undervisningstid,
+        "önskemål": onskemal
     }
     st.session_state.larare_data.append(ny_larare)
     st.success(f"Lärare {larar_id} tillagd!")
