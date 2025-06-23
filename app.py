@@ -24,17 +24,12 @@ for amne in amnen:
         st.session_state.temp_farg_val[amne] = st.color_picker(
             f"{amne}",
             st.session_state.temp_farg_val[amne],
-            key=f"farg_{amne}"  # Gör nyckeln unik för varje ämne
+            key=f"farg_{amne}"  # unikt key per ämne
         )
     with col2:
         st.write(st.session_state.temp_farg_val[amne])
 
 if st.button("Spara färger", key="spara_farger_knapp"):
-    st.session_state.farg_val = st.session_state.temp_farg_val.copy()
-    st.success("Färger sparade!")
-
-
-if st.button("Spara färger"):
     st.session_state.farg_val = st.session_state.temp_farg_val.copy()
     st.success("Färger sparade!")
 
