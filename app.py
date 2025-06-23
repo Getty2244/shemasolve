@@ -3,7 +3,7 @@ import pandas as pd
 import datetime
 
 # === ÄMNEN OCH KLASSER ===
-amnen = ["SO", "MA", "NO", "SV", "ENG", "IDROTT", "TRÄSLÖJD", "SY", "HK"]
+amnen = ["SO", "MA", ""NO", "SV", "ENG", "IDROTT", "TRÄSLÖJD", "SY", "HK"]
 klasser = ["7a", "7b", "8a", "8b", "9a", "9b"]
 dagar_val = ["Mon", "Tue", "Wed", "Thu", "Fri"]
 
@@ -58,8 +58,87 @@ if skicka and larar_id and amne and larar_klasser and arbetsdagar and undervisni
     st.session_state.larare_data.append(ny_larare)
     st.success(f"Lärare {larar_id} tillagd!")
 
-# === 3. INSTÄLLNINGAR FÖR SKOLDAGEN ===
-st.header("3. Inställningar för skoldagen")
+# === 3. LÄGG TILL SAL ===
+st.header("3. Lägg till sal")
+
+sal_typ = st.radio("Typ av sal", options=["Hemklassrum", "Ämnesklassrum"], horizontal=True)
+
+with st.form("sal_form"):
+    sal_namn = st.text_input("Salnamn (t.ex. A101, NO-labb)")
+    sal_klass = None
+    sal_amne = None
+
+    if sal_typ == "Hemklassrum":
+        sal_klass = st.selectbox("Tilldelad klass", options=klasser)
+    else:
+        sal_amne = st.selectbox("Tilldelat ämne", options=amnen)
+
+    sal_submit = st.form_submit_button("Lägg till sal")
+
+if "sal_data" not in st.session_state:
+    st.session_state.sal_data = []
+
+if sal_submit and sal_namn:
+    ny_sal = {
+        "sal": sal_namn,
+        "typ": sal_typ,
+        "klass": sal_klass if sal_typ == "Hemklassrum" else None,
+        "ämne": sal_amne if sal_typ == "Ämnesklassrum" else None
+    }
+    st.session_state.sal_data.append(ny_sal)
+    st.success(f"Sal {sal_namn} tillagd!")
+
+st.write("### Inlagda salar:")
+if "redigera_sal_index" not in st.session_state:
+    st.session_state.redigera_sal_index = None
+
+for i, sal in enumerate(st.session_state.sal_data):
+    if st.session_state.redigera_sal_index == i:
+        st.write(f"✏️ Redigerar sal **{sal['sal']}**")
+        nytt_namn = st.text_input("Salnamn", value=sal["sal"], key=f"edit_sal_namn_{i}")
+        ny_typ = st.selectbox("Typ av sal", options=["Hemklassrum", "Ämnesklassrum"], index=["Hemklassrum", "Ämnesklassrum"].index(sal["typ"]), key=f"edit_sal_typ_{i}")
+
+        ny_klass = None
+        ny_amne = None
+        if ny_typ == "Hemklassrum":
+            ny_klass = st.selectbox("Tilldelad klass", options=klasser, index=klasser.index(sal["klass"]) if sal["klass"] else 0, key=f"edit_klass_{i}")
+        else:
+            ny_amne = st.selectbox("Tilldelat ämne", options=amnen, index=amnen.index(sal["ämne"]) if sal["ämne"] else 0, key=f"edit_amne_{i}")
+
+        if st.button("💾 Spara sal", key=f"spara_sal_{i}"):
+            st.session_state.sal_data[i] = {
+                "sal": nytt_namn,
+                "typ": ny_typ,
+                "klass": ny_klass if ny_typ == "Hemklassrum" else None,
+                "ämne": ny_amne if ny_typ == "Ämnesklassrum" else None
+            }
+            st.session_state.redigera_sal_index = None
+            st.rerun()
+
+        if st.button("❌ Ta bort", key=f"ta_bort_sal_{i}"):
+            st.session_state.sal_data.pop(i)
+            st.session_state.redigera_sal_index = None
+            st.rerun()
+
+        if st.button("Avbryt", key=f"avbryt_sal_{i}"):
+            st.session_state.redigera_sal_index = None
+            st.rerun()
+    else:
+        col1, col2 = st.columns([5, 1])
+        with col1:
+            info = f"{sal['sal']} – {sal['typ']}"
+            if sal["klass"]:
+                info += f", klass: {sal['klass']}"
+            if sal["ämne"]:
+                info += f", ämne: {sal['ämne']}"
+            st.write(info)
+        with col2:
+            if st.button("✏️ Redigera", key=f"redigera_sal_{i}"):
+                st.session_state.redigera_sal_index = i
+                st.rerun()
+
+# === 4. INSTÄLLNINGAR FÖR SKOLDAGEN ===
+st.header("4. Inställningar för skoldagen")
 
 with st.form("form_skoldag_tider"):
     starttid_str = st.text_input("Skoldagens starttid (HH:MM)", value="08:30")
@@ -77,7 +156,7 @@ with st.form("form_skoldag_tider"):
 if spara_tid:
     try:
         starttid = datetime.datetime.strptime(starttid_str, "%H:%M").time()
-        sluttider_obj = {dag: datetime.datetime.strptime(tid, "%H:%M").time() for dag, tid in sluttider.items()}
+        sluttider_obj = {dag: datetime.datetime.strptime(t, "%H:%M").time() for dag, t in sluttider.items()}
         st.session_state.daginst = {
             "starttid": starttid,
             "sluttider": sluttider_obj,
