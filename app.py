@@ -240,3 +240,41 @@ if spara_tid:
         st.success("Skoldagens inställningar sparade!")
     except ValueError:
         st.error("Felaktigt tidsformat. Använd HH:MM")
+        # === 5. TEST: SCHEMAGENERERING (en lärare, en klass) ===
+st.header("5. Schemagenerering – testkörning")
+
+if "daginst" in st.session_state and st.session_state.larare_data:
+    daginst = st.session_state.daginst
+    starttid = datetime.datetime.combine(datetime.date.today(), daginst["starttid"])
+    sluttider = {dag: datetime.datetime.combine(datetime.date.today(), t) for dag, t in daginst["sluttider"].items()}
+    lek_min = daginst["lek_min"]
+    rast_min = daginst["rast_min"]
+
+    # Testdata: välj första läraren
+    larare = st.session_state.larare_data[0]
+    kvar_minuter = larare["minuter_per_vecka"]
+    schema = []
+
+    for dag in larare["dagar"]:
+        tid = starttid
+        while tid + datetime.timedelta(minutes=lek_min) <= sluttider[dag] and kvar_minuter >= lek_min:
+            slut = tid + datetime.timedelta(minutes=lek_min)
+
+            schema.append({
+                "dag": dag,
+                "start": tid.time().strftime("%H:%M"),
+                "slut": slut.time().strftime("%H:%M"),
+                "klass": larare["klasser"][0],  # första klass
+                "ämne": larare["ämne"],
+                "lärare": larare["id"]
+            })
+
+            kvar_minuter -= lek_min
+            tid = slut + datetime.timedelta(minutes=rast_min)
+
+    df = pd.DataFrame(schema)
+    st.subheader(f"Förslag på schema ({larare['id']}) – {larare['ämne']}")
+    st.dataframe(df)
+
+else:
+    st.info("Lägg till minst en lärare och spara skolinställningar först.")
