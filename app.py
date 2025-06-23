@@ -1,64 +1,59 @@
 import streamlit as st
+import datetime
 
 st.title("AI-schemaplanerare för skolan")
 
-# Initiera session_state för lärare och salar om det inte finns
-if 'lärare' not in st.session_state:
-    st.session_state['lärare'] = []
+st.write("Ladda upp lärardata, salar, lektionslängder och önskemål.")
+st.write("Detta är en plats för din schemagenerator.")
 
-if 'salar' not in st.session_state:
-    st.session_state['salar'] = []
+# --- Lärare input (exempel) ---
+st.header("Lärare och ämnen")
 
-# Lärare - form
-st.header("Lärare")
 with st.form(key='teacher_form'):
-    lärarid = st.text_input("LärarID")
-    ämne = st.selectbox("Ämne", ["Svenska", "Engelska", "Matematik", "SO (inkl. Religion)", "NO", "Idrott", "Slöjd", "Hemkunskap", "Spanska", "Franska", "Tyska", "Bild", "Musik", "Teknik"])
-    klasser = st.multiselect("Klasser", ["7a", "7b", "8a", "8b", "9a", "9b"])
-    arbetsdagar = st.multiselect(
-        "Arbetsdagar", 
-        ["Måndag", "Tisdag", "Onsdag", "Torsdag", "Fredag"], 
-        default=["Måndag", "Tisdag", "Onsdag", "Torsdag", "Fredag"]
-    )
-    submit_teacher = st.form_submit_button(label='Lägg till lärare')
+    lärare_id = st.text_input("Lärar-ID (ex. bgk01)")
+    ämne = st.selectbox("Ämne", ["Svenska", "Engelska", "Matematik", "NO", "SO", "Idrott", "Slöjd", "Hemkunskap"])
+    klasser = st.multiselect("Klasser de undervisar", ["7a", "7b", "8a", "8b", "9a", "9b"])
+    arbetsdagar = st.multiselect("Arbetsdagar", ["Måndag", "Tisdag", "Onsdag", "Torsdag", "Fredag"])
+    submit_teacher = st.form_submit_button("Spara lärare")
 
 if submit_teacher:
-    ny_lärare = {
-        'lärarid': lärarid,
-        'ämne': ämne,
-        'klasser': klasser,
-        'arbetsdagar': arbetsdagar
-    }
-    st.session_state.lärare.append(ny_lärare)
-    st.success(f"Lärare {lärarid} tillagd!")
+    if 'lärare' not in st.session_state:
+        st.session_state['lärare'] = []
+    st.session_state['lärare'].append({
+        "id": lärare_id,
+        "ämne": ämne,
+        "klasser": klasser,
+        "arbetsdagar": arbetsdagar
+    })
+    st.success(f"Lärare {lärare_id} sparad!")
 
-# Visa alla lärare
-if st.session_state.lärare:
-    st.subheader("Alla lärare")
-    for i, lärare in enumerate(st.session_state.lärare):
-        st.write(f"{i+1}. ID: {lärare['lärarid']}, Ämne: {lärare['ämne']}, Klasser: {', '.join(lärare['klasser'])}, Arbetsdagar: {', '.join(lärare['arbetsdagar'])}")
+if 'lärare' in st.session_state:
+    st.write("Sparade lärare:")
+    st.write(st.session_state['lärare'])
 
-# Salar - form
+# --- Salar input (exempel) ---
 st.header("Salar")
-with st.form(key='room_form'):
-    sal_namn = st.text_input("Salens namn/nummer")
+
+with st.form(key='rooms_form'):
+    sal_namn = st.text_input("Salsnamn eller nummer")
     sal_typ = st.selectbox("Typ av sal", ["Hemklassrum", "Ämnesklassrum"])
-    submit_room = st.form_submit_button(label='Lägg till sal')
+    submit_room = st.form_submit_button("Spara sal")
 
 if submit_room:
-    ny_sal = {
-        'namn': sal_namn,
-        'typ': sal_typ
-    }
-    st.session_state.salar.append(ny_sal)
-    st.success(f"Sal {sal_namn} tillagd!")
+    if 'salar' not in st.session_state:
+        st.session_state['salar'] = []
+    st.session_state['salar'].append({
+        "namn": sal_namn,
+        "typ": sal_typ
+    })
+    st.success(f"Sal {sal_namn} sparad!")
 
-# Visa alla salar
-if st.session_state.salar:
-    st.subheader("Alla salar")
-    for i, sal in enumerate(st.session_state.salar):
-        st.write(f"{i+1}. Sal: {sal['namn']}, Typ: {sal['typ']}")
-        st.header("Tider och raster")
+if 'salar' in st.session_state:
+    st.write("Sparade salar:")
+    st.write(st.session_state['salar'])
+
+# --- Tider och raster ---
+st.header("Tider och raster")
 
 with st.form(key='time_form'):
     starttid = st.time_input("Skoldagens starttid", value=datetime.time(8,30))
