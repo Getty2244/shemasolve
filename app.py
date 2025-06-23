@@ -37,3 +37,13 @@ with st.form(key='teacher_form'):
 
 if submit_button:
     st.write(f"LärarID: {lärarid}, Ämne: {ämne}, Klasser: {klasser}, Arbetsdagar: {arbetsdagar}")
+# Salar - form
+st.header("Salar")
+with st.form(key='room_form'):
+    sal_namn = st.text_input("Salens namn/nummer")
+    sal_typ = st.selectbox("Typ av sal", ["Hemklassrum", "Ämnesklassrum"])
+    special_utrustning = st.text_input("Specialutrustning (om någon) - t.ex. labb, datorer")
+    submit_room = st.form_submit_button(label='Lägg till sal')
+
+if submit_room:
+    st.write(f"Sal: {sal_namn}, Typ: {sal_typ}, Utrustning: {special_utrustning}")
