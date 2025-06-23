@@ -1,35 +1,32 @@
 import streamlit as st
 import pandas as pd
 
-data = [
-    ["Mon", "08:30-09:15", "7a", "bgk1", "SO"],
-    ["Tue", "08:30-09:15", "7a", "bgk1", "SO"],
-    ["Mon", "09:20-10:05", "8a", "bgk1", "SO"],
-    ["Tue", "09:20-10:05", "8a", "bgk1", "SO"],
-    ["Mon", "10:10-10:55", "9a", "bgk1", "SO"],
-    ["Tue", "10:10-10:55", "9a", "bgk1", "SO"],
-    ["Mon", "09:20-10:05", "7a", "bgk2", "MA"],
-    ["Tue", "09:20-10:05", "7a", "bgk2", "MA"],
-    ["Mon", "08:30-09:15", "8a", "bgk2", "MA"],
-    ["Tue", "08:30-09:15", "8a", "bgk2", "MA"],
-    ["Mon", "11:00-11:45", "9a", "bgk2", "MA"],
-    ["Tue", "11:00-11:45", "9a", "bgk2", "MA"],
-]
+# Lista med ämnen
+amnen = ["SO", "MA", "NO", "SV", "ENG", "IDROTT", "TRÄSLÖJD", "SY", "HK"]
 
-df = pd.DataFrame(data, columns=["Dag", "Tid", "Klass", "Lärare", "Ämne"])
+st.title("Färgval för ämnen")
 
-df["Info"] = df.apply(lambda r: f"{r['Ämne']} {r['Klass']} ({r['Lärare']})", axis=1)
+# Låt användaren välja färg för varje ämne
+farg_val = {}
+for amne in amnen:
+    farg_val[amne] = st.color_picker(f"Välj färg för {amne}", "#FFFFFF")
 
-pivot = pd.pivot_table(
-    df,
-    index="Tid",
-    columns="Dag",
-    values="Info",
-    aggfunc=lambda x: "\n".join(x)  # Slår ihop flera lektioner med radbrytning
-)
+st.write("---")
 
-order = ["Mon", "Tue", "Wed", "Thu", "Fri"]
-pivot = pivot.reindex(columns=order)
+# Exempeldata för schema, varje rad är en lektion med ämne
+data = {
+    "Tid": ["08:30-09:15", "09:20-10:05", "10:10-10:55", "11:00-11:45"],
+    "Ämne": ["SO", "MA", "SO", "MA"],
+    "Klass": ["7a", "8a", "9a", "9a"]
+}
 
-st.write("### Schema (dagar som kolumner, tider som rader)")
-st.dataframe(pivot.fillna(""))
+df = pd.DataFrame(data)
+
+# Funktion för att färgsätta ämnesceller med vald färg
+def color_amne(val):
+    color = farg_val.get(val, "#FFFFFF")
+    return f"background-color: {color};"
+
+# Visa tabellen med färgerade ämnesceller
+st.write("### Schema med färgade ämnen")
+st.dataframe(df.style.applymap(color_amne, subset=["Ämne"]))
