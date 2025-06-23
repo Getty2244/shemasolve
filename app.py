@@ -1,7 +1,5 @@
 import streamlit as st
 import pandas as pd
-import datetimeimport streamlit as st
-import pandas as pd
 import datetime
 
 # === ÄMNEN OCH KLASSER ===
