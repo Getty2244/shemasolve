@@ -79,6 +79,8 @@ if skicka and larar_id and amne and larar_klasser and arbetsdagar and undervisni
 
 # === Visa/redigera inlagda lärare ===
 st.subheader("📋 Inlagda lärare")
+st.write("🔧 Redigerar index:", st.session_state.redigera_larare_index)
+
 if st.session_state.larare_data:
     for i, larare in enumerate(st.session_state.larare_data):
         if st.session_state.redigera_larare_index == i:
@@ -90,7 +92,7 @@ if st.session_state.larare_data:
             nya_minuter = st.number_input("Undervisningsminuter/vecka", value=larare["minuter_per_vecka"], min_value=0, step=10, key=f"edit_min_{i}")
             nya_onskemal = st.text_area("Extra önskemål", value=larare.get("önskemål", ""), key=f"edit_onskemal_{i}")
 
-            if st.button("💾 Spara", key=f"spara_{i}"):
+            if st.button("📏 Spara", key=f"spara_{i}"):
                 st.session_state.larare_data[i] = {
                     "id": nytt_id,
                     "ämne": nytt_amne,
@@ -124,8 +126,7 @@ if st.session_state.larare_data:
                 if st.button("✏️ Redigera", key=f"redigera_larare_{i}"):
                     st.session_state.redigera_larare_index = i
                     st.rerun()
-else:
-    st.info("Inga lärare tillagda ännu.")
+
 
 
 # === 3. LÄGG TILL SAL ===
