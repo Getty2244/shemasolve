@@ -38,4 +38,23 @@ if st.session_state.lärare:
     for i, lärare in enumerate(st.session_state.lärare):
         st.write(f"{i+1}. ID: {lärare['lärarid']}, Ämne: {lärare['ämne']}, Klasser: {', '.join(lärare['klasser'])}, Arbetsdagar: {', '.join(lärare['arbetsdagar'])}")
 
-# Salar -
+# Salar - form
+st.header("Salar")
+with st.form(key='room_form'):
+    sal_namn = st.text_input("Salens namn/nummer")
+    sal_typ = st.selectbox("Typ av sal", ["Hemklassrum", "Ämnesklassrum"])
+    submit_room = st.form_submit_button(label='Lägg till sal')
+
+if submit_room:
+    ny_sal = {
+        'namn': sal_namn,
+        'typ': sal_typ
+    }
+    st.session_state.salar.append(ny_sal)
+    st.success(f"Sal {sal_namn} tillagd!")
+
+# Visa alla salar
+if st.session_state.salar:
+    st.subheader("Alla salar")
+    for i, sal in enumerate(st.session_state.salar):
+        st.write(f"{i+1}. Sal: {sal['namn']}, Typ: {sal['typ']}")
