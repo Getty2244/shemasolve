@@ -240,58 +240,58 @@ if spara_tid:
         st.success("Skoldagens inställningar sparade!")
     except ValueError:
         st.error("Felaktigt tidsformat. Använd HH:MM")
-        # === 5. SCHEMAGENERERING – TEST ===
+        # === 5. SCHEMAGENERERING & VÄXLINGSBAR VY ===
 st.header("5. Schemagenerering – testkörning")
 
-# Hjälpfunktion: välj rätt sal
-def hitta_sal(amne, klass):
-    # Hemklassrumsämnen
-    if amne in ["SO", "MA", "ENG", "SV"]:
-        for sal in st.session_state.sal_data:
-            if sal["typ"] == "Hemklassrum" and sal["klass"] == klass:
-                return sal["sal"]
-    else:
-        for sal in st.session_state.sal_data:
-            if sal["typ"] == "Ämnesklassrum" and sal["ämne"] == amne:
-                return sal["sal"]
-    return "?"
-
-if "daginst" in st.session_state and st.session_state.larare_data and "sal_data" in st.session_state:
+if "daginst" in st.session_state and st.session_state.larare_data:
     daginst = st.session_state.daginst
     starttid = datetime.datetime.combine(datetime.date.today(), daginst["starttid"])
     sluttider = {dag: datetime.datetime.combine(datetime.date.today(), t) for dag, t in daginst["sluttider"].items()}
     lek_min = daginst["lek_min"]
     rast_min = daginst["rast_min"]
 
-    # Välj första läraren som test
-    larare = st.session_state.larare_data[0]
-    kvar_minuter = larare["minuter_per_vecka"]
     schema = []
 
-    for dag in larare["dagar"]:
-        tid = starttid
-        while tid + datetime.timedelta(minutes=lek_min) <= sluttider[dag] and kvar_minuter >= lek_min:
-            slut = tid + datetime.timedelta(minutes=lek_min)
-            klass = larare["klasser"][0]
-            ämne = larare["ämne"]
-            sal = hitta_sal(ämne, klass)
+    for larare in st.session_state.larare_data:
+        kvar_minuter = larare["minuter_per_vecka"]
+        for dag in larare["dagar"]:
+            tid = starttid
+            while tid + datetime.timedelta(minutes=lek_min) <= sluttider[dag] and kvar_minuter >= lek_min:
+                slut = tid + datetime.timedelta(minutes=lek_min)
 
-            schema.append({
-                "dag": dag,
-                "start": tid.time().strftime("%H:%M"),
-                "slut": slut.time().strftime("%H:%M"),
-                "klass": klass,
-                "ämne": ämne,
-                "lärare": larare["id"],
-                "sal": sal
-            })
+                schema.append({
+                    "dag": dag,
+                    "start": tid.time().strftime("%H:%M"),
+                    "slut": slut.time().strftime("%H:%M"),
+                    "klass": larare["klasser"][0],
+                    "ämne": larare["ämne"],
+                    "lärare": larare["id"],
+                    "sal": ""  # Tillfälligt tom
+                })
 
-            kvar_minuter -= lek_min
-            tid = slut + datetime.timedelta(minutes=rast_min)
+                kvar_minuter -= lek_min
+                tid = slut + datetime.timedelta(minutes=rast_min)
 
     df = pd.DataFrame(schema)
-    st.subheader(f"Förslag på schema ({larare['id']}) – {larare['ämne']}")
-    st.dataframe(df)
+    st.session_state.generated_schema = df
+
+    st.subheader("🗂️ Visa schema")
+    visningstyp = st.selectbox("Visa schema för:", ["Klass", "Lärare", "Sal"])
+
+    if visningstyp == "Klass":
+        val = st.selectbox("Välj klass:", klasser)
+        vis_df = df[df["klass"] == val]
+    elif visningstyp == "Lärare":
+        val = st.selectbox("Välj lärare:", [l["id"] for l in st.session_state.larare_data])
+        vis_df = df[df["lärare"] == val]
+    else:
+        val = st.selectbox("Välj sal:", [s["sal"] for s in st.session_state.sal_data])
+        vis_df = df[df["sal"] == val]
+
+    if not vis_df.empty:
+        st.dataframe(vis_df)
+    else:
+        st.info("Inget schema hittades för det valet.")
 
 else:
-    st.info("Lägg till minst en lärare, salar och spara skolinställningar först.")
+    st.info("Lägg till minst en lärare och spara skolinställningar först.")
