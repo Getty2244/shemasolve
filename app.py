@@ -58,10 +58,10 @@ if skicka and larar_id and amne and larar_klasser and arbetsdagar and undervisni
     st.session_state.larare_data.append(ny_larare)
     st.success(f"Lärare {larar_id} tillagd!")
 
-# === 4. INSTÄLLNINGAR FÖR SKOLDAGEN ===
-st.header("4. Inställningar för skoldagen")
+# === 3. INSTÄLLNINGAR FÖR SKOLDAGEN ===
+st.header("3. Inställningar för skoldagen")
 
-with st.form("daginst_form"):
+with st.form("form_skoldag_tider"):
     starttid_str = st.text_input("Skoldagens starttid (HH:MM)", value="08:30")
     sluttider = {}
     for dag in dagar_val:
