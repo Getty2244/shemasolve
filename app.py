@@ -63,14 +63,14 @@ st.header("3. Lägg till sal")
 with st.form("sal_form"):
     sal_namn = st.text_input("Salnamn (t.ex. A101, NO-labb)")
     sal_typ = st.selectbox("Typ av sal", options=["Hemklassrum", "Ämnesklassrum"])
-    
+
     sal_klass = None
     sal_amne = None
 
     if sal_typ == "Hemklassrum":
-        sal_klass = st.selectbox("Tilldelad klass", options=klasser)
-    elif sal_typ == "Ämnesklassrum":
-        sal_amne = st.selectbox("Tilldelat ämne", options=amnen)
+        sal_klass = st.selectbox("Tilldelad klass", options=klasser, key="klass_val")
+    else:
+        sal_amne = st.selectbox("Tilldelat ämne", options=amnen, key="amne_val")
 
     sal_submit = st.form_submit_button("Lägg till sal")
 
