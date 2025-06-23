@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 
-# Exempeldata (din schemalista)
 data = [
     ["Mon", "08:30-09:15", "7a", "bgk1", "SO"],
     ["Tue", "08:30-09:15", "7a", "bgk1", "SO"],
@@ -19,15 +18,18 @@ data = [
 
 df = pd.DataFrame(data, columns=["Dag", "Tid", "Klass", "Lärare", "Ämne"])
 
-# Skapa en "cell" med ämne + klass + lärare
 df["Info"] = df.apply(lambda r: f"{r['Ämne']} {r['Klass']} ({r['Lärare']})", axis=1)
 
-# Gör en pivottabell: rader = Tid, kolumner = Dag, värde = Info
-pivot = df.pivot(index="Tid", columns="Dag", values="Info")
+pivot = pd.pivot_table(
+    df,
+    index="Tid",
+    columns="Dag",
+    values="Info",
+    aggfunc=lambda x: "\n".join(x)  # Slår ihop flera lektioner med radbrytning
+)
 
-# Byt ordning på dagarna så det blir måndag-fredag (de dagar som finns)
 order = ["Mon", "Tue", "Wed", "Thu", "Fri"]
 pivot = pivot.reindex(columns=order)
 
 st.write("### Schema (dagar som kolumner, tider som rader)")
-st.dataframe(pivot.fillna(""))  # Fyll tomma celler med tomt sträng
+st.dataframe(pivot.fillna(""))
