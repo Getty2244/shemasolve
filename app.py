@@ -60,17 +60,19 @@ if st.session_state.larare_data:
 # === 3. LÄGG TILL SAL ===
 st.header("3. Lägg till sal")
 
+# Välj saltyp utanför formuläret – gör layouten reaktiv
+sal_typ = st.radio("Typ av sal", options=["Hemklassrum", "Ämnesklassrum"], horizontal=True)
+
 with st.form("sal_form"):
     sal_namn = st.text_input("Salnamn (t.ex. A101, NO-labb)")
-    sal_typ = st.selectbox("Typ av sal", options=["Hemklassrum", "Ämnesklassrum"])
 
     sal_klass = None
     sal_amne = None
 
     if sal_typ == "Hemklassrum":
-        sal_klass = st.selectbox("Tilldelad klass", options=klasser, key="klass_val")
+        sal_klass = st.selectbox("Tilldelad klass", options=klasser)
     else:
-        sal_amne = st.selectbox("Tilldelat ämne", options=amnen, key="amne_val")
+        sal_amne = st.selectbox("Tilldelat ämne", options=amnen)
 
     sal_submit = st.form_submit_button("Lägg till sal")
 
