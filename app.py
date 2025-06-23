@@ -42,7 +42,7 @@ st.header("Salar")
 with st.form(key='room_form'):
     sal_namn = st.text_input("Salens namn/nummer")
     sal_typ = st.selectbox("Typ av sal", ["Hemklassrum", "Ämnesklassrum"])
-    special_utrustning = st.text_input("Specialutrustning (om någon) - t.ex. labb, datorer")
+    special_utrustning = st.text_input("Specialutrustning (om någon) - t.ex. labb")
     submit_room = st.form_submit_button(label='Lägg till sal')
 
 if submit_room:
