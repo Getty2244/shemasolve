@@ -69,7 +69,7 @@ if skicka and larar_id and amne and larar_klasser and arbetsdagar and undervisni
         "klasser": larar_klasser,
         "dagar": arbetsdagar,
         "minuter_per_vecka": undervisningstid,
-        "önskemål": onskemal
+        "önskemål": onskemal or ""
     }
     st.session_state.larare_data.append(ny_larare)
     st.success(f"Lärare {larar_id} tillagd!")
@@ -78,12 +78,13 @@ if skicka and larar_id and amne and larar_klasser and arbetsdagar and undervisni
 st.subheader("📋 Inlagda lärare")
 if st.session_state.larare_data:
     for larare in st.session_state.larare_data:
+        onskemal_text = larare.get("önskemål", "")
         st.markdown(f"""
         - **{larare['id']}** ({larare['ämne']})  
           Klasser: {', '.join(larare['klasser'])}  
           Dagar: {', '.join(larare['dagar'])}  
           Minuter/vecka: {larare['minuter_per_vecka']}  
-          Önskemål: _{larare['önskemål']}_  
+          Önskemål: _{onskemal_text}_  
         """)
 else:
     st.info("Inga lärare tillagda ännu.")
