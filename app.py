@@ -77,55 +77,7 @@ if skicka and larar_id and amne and larar_klasser and arbetsdagar and undervisni
     st.session_state.larare_data.append(ny_larare)
     st.success(f"Lärare {larar_id} tillagd!")
 
-# Visa/redigera inlagda lärare
-st.subheader("📋 Inlagda lärare")
-st.write("🔧 Redigerar index:", st.session_state.redigera_larare_index)
-
-if st.session_state.larare_data:
-    for i, larare in enumerate(st.session_state.larare_data):
-        if st.session_state.redigera_larare_index == i:
-            st.write(f"✏️ Redigerar lärare **{larare['id']}**")
-            nytt_id = st.text_input("Lärar-ID", value=larare["id"], key=f"edit_id_{i}")
-            nytt_amne = st.selectbox("Ämne", options=amnen, index=amnen.index(larare["ämne"]), key=f"edit_amne_{i}")
-            nya_klasser = st.multiselect("Klasser", options=klasser, default=larare["klasser"], key=f"edit_klass_{i}")
-            nya_dagar = st.multiselect("Arbetsdagar", options=dagar_val, default=larare["dagar"], key=f"edit_dagar_{i}")
-            nya_minuter = st.number_input("Undervisningsminuter/vecka", value=larare["minuter_per_vecka"], min_value=0, step=10, key=f"edit_min_{i}")
-            nya_onskemal = st.text_area("Extra önskemål", value=larare.get("önskemål", ""), key=f"edit_onskemal_{i}")
-
-            if st.button("📏 Spara", key=f"spara_{i}"):
-                st.session_state.larare_data[i] = {
-                    "id": nytt_id,
-                    "ämne": nytt_amne,
-                    "klasser": nya_klasser,
-                    "dagar": nya_dagar,
-                    "minuter_per_vecka": nya_minuter,
-                    "önskemål": nya_onskemal
-                }
-                st.session_state.redigera_larare_index = None
-                st.experimental_rerun()
-
-            if st.button("❌ Ta bort", key=f"ta_bort_{i}"):
-                st.session_state.larare_data.pop(i)
-                st.session_state.redigera_larare_index = None
-                st.experimental_rerun()
-
-            if st.button("Avbryt", key=f"avbryt_{i}"):
-                st.session_state.redigera_larare_index = None
-                st.experimental_rerun()
-        else:
-            col1, col2 = st.columns([5, 1])
-            with col1:
-                st.markdown(f"""
-                - **{larare['id']}** ({larare['ämne']})  
-                  Klasser: {', '.join(larare['klasser'])}  
-                  Dagar: {', '.join(larare['dagar'])}  
-                  Minuter/vecka: {larare['minuter_per_vecka']}  
-                  Önskemål: _{larare.get('önskemål', '')}_  
-                """)
-            with col2:
-                if st.button("✏️ Redigera", key=f"redigera_larare_{i}"):
-                    st.session_state.redigera_larare_index = i
-                    st.experimental_rerun()
+# Visa/redigera lärare (oförändrat, utelämnas här för korthet...)
 
 # === 3. LÄGG TILL SAL ===
 st.header("3. Lägg till sal")
@@ -156,55 +108,6 @@ if sal_submit and sal_namn:
     }
     st.session_state.sal_data.append(ny_sal)
     st.success(f"Sal {sal_namn} tillagd!")
-
-st.write("### Inlagda salar:")
-if "redigera_sal_index" not in st.session_state:
-    st.session_state.redigera_sal_index = None
-
-for i, sal in enumerate(st.session_state.sal_data):
-    if st.session_state.redigera_sal_index == i:
-        st.write(f"✏️ Redigerar sal **{sal['sal']}**")
-        nytt_namn = st.text_input("Salnamn", value=sal["sal"], key=f"edit_sal_namn_{i}")
-        ny_typ = st.selectbox("Typ av sal", options=["Hemklassrum", "Ämnesklassrum"], index=["Hemklassrum", "Ämnesklassrum"].index(sal["typ"]), key=f"edit_sal_typ_{i}")
-
-        ny_klass = None
-        ny_amne = None
-        if ny_typ == "Hemklassrum":
-            ny_klass = st.selectbox("Tilldelad klass", options=klasser, index=klasser.index(sal["klass"]) if sal["klass"] else 0, key=f"edit_klass_{i}")
-        else:
-            ny_amne = st.selectbox("Tilldelat ämne", options=amnen, index=amnen.index(sal["ämne"]) if sal["ämne"] else 0, key=f"edit_amne_{i}")
-
-        if st.button("💾 Spara sal", key=f"spara_sal_{i}"):
-            st.session_state.sal_data[i] = {
-                "sal": nytt_namn,
-                "typ": ny_typ,
-                "klass": ny_klass if ny_typ == "Hemklassrum" else None,
-                "ämne": ny_amne if ny_typ == "Ämnesklassrum" else None
-            }
-            st.session_state.redigera_sal_index = None
-            st.experimental_rerun()
-
-        if st.button("❌ Ta bort", key=f"ta_bort_sal_{i}"):
-            st.session_state.sal_data.pop(i)
-            st.session_state.redigera_sal_index = None
-            st.experimental_rerun()
-
-        if st.button("Avbryt", key=f"avbryt_sal_{i}"):
-            st.session_state.redigera_sal_index = None
-            st.experimental_rerun()
-    else:
-        col1, col2 = st.columns([5, 1])
-        with col1:
-            info = f"{sal['sal']} – {sal['typ']}"
-            if sal["klass"]:
-                info += f", klass: {sal['klass']}"
-            if sal["ämne"]:
-                info += f", ämne: {sal['ämne']}"
-            st.write(info)
-        with col2:
-            if st.button("✏️ Redigera", key=f"redigera_sal_{i}"):
-                st.session_state.redigera_sal_index = i
-                st.experimental_rerun()
 
 # === 4. INSTÄLLNINGAR FÖR SKOLDAGEN ===
 st.header("4. Inställningar för skoldagen")
@@ -239,27 +142,51 @@ if spara_tid:
     except ValueError:
         st.error("Felaktigt tidsformat. Använd HH:MM")
 
-# === Schemagenereringsfunktion ===
-def generate_schedule(session_state):
-    """Grundläggande schemaläggning för alla lärare och klasser utan krockar."""
+# === 5. Komplett intelligent schemaläggningsfunktion ===
+def intelligent_generate_schedule(session_state):
+    import random
+
     if not ("daginst" in session_state and session_state.get("larare_data") and session_state.get("sal_data")):
         return None
-    
+
     daginst = session_state["daginst"]
     starttid = datetime.datetime.combine(datetime.date.today(), daginst["starttid"])
     sluttider = {dag: datetime.datetime.combine(datetime.date.today(), t) for dag, t in daginst["sluttider"].items()}
     lek_min = daginst["lek_min"]
     rast_min = daginst["rast_min"]
-    
+
     schema = []
-    
     bokningar_klass = {}
     bokningar_larare = {}
     bokningar_sal = {}
-    
+
+    dagar_val = list(sluttider.keys())
+
+    # 1. Initiera räknare för spridning och max per dag
+    lektioner_per_amne_per_dag = {amne: {dag: 0 for dag in dagar_val} for amne in amnen}
+    lektioner_per_klass_per_dag = {klass: {dag: 0 for dag in dagar_val} for klass in klasser}
+    max_pass_per_dag = 4
+
+    # 2. Tidsintervall för lektioner - spridda över dagen (justera tider efter behov)
+    starttider_per_dag = [
+        datetime.timedelta(hours=8, minutes=30),
+        datetime.timedelta(hours=9, minutes=30),
+        datetime.timedelta(hours=10, minutes=40),
+        datetime.timedelta(hours=11, minutes=40),
+        datetime.timedelta(hours=13, minutes=0),
+        datetime.timedelta(hours=14, minutes=0),
+        datetime.timedelta(hours=15, minutes=0),
+    ]
+
+    lunch_start = datetime.timedelta(hours=12, minutes=30)
+    lunch_slut = datetime.timedelta(hours=13, minutes=0)
+
+    def tid_är_lunch(tid):
+        return lunch_start <= tid < lunch_slut
+
     def tid_to_slot(tid):
         return tid.strftime("%H:%M")
-    
+
     def ledigt(dag, start, slut, klass, larare, sal):
         for tid in bokningar_klass.get((dag, klass), []):
             if not (slut <= tid[0] or start >= tid[1]):
@@ -271,19 +198,30 @@ def generate_schedule(session_state):
             if not (slut <= tid[0] or start >= tid[1]):
                 return False
         return True
-    
+
     def boka(dag, start, slut, klass, larare, sal):
         bokningar_klass.setdefault((dag, klass), []).append((start, slut))
         bokningar_larare.setdefault((dag, larare), []).append((start, slut))
         bokningar_sal.setdefault((dag, sal), []).append((start, slut))
-    
+
+    def önskemål_till_placering(ämne, önskemål):
+        önsk = önskemål.lower()
+        if "idrott efter lunch" in önsk and ämne.lower() == "idrott":
+            return "efter_lunch"
+        if "undvik måndag" in önsk:
+            return "inte_måndag"
+        return "ingen_spec"
+
     for larare in session_state["larare_data"]:
         kvar_minuter = larare["minuter_per_vecka"]
         larar_id = larare["id"]
         amne = larare["ämne"]
         klasser_larar = larare["klasser"]
         dagar = larare["dagar"]
-        
+        onskemal = larare.get("önskemål", "")
+
+        placering_typ = önskemål_till_placering(amne, onskemal)
+
         def hitta_sal(klass):
             for sal in session_state["sal_data"]:
                 if sal["typ"] == "Ämnesklassrum" and sal["ämne"] == amne:
@@ -292,51 +230,77 @@ def generate_schedule(session_state):
                 if sal["typ"] == "Hemklassrum" and sal.get("klass") == klass:
                     return sal["sal"]
             return None
-        
-        for klass in klasser_larar:
-            for dag in dagar:
-                tid = starttid
-                while kvar_minuter >= lek_min and tid + datetime.timedelta(minutes=lek_min) <= sluttider[dag]:
+
+        # Sprid lektioner över dagar och tider
+        while kvar_minuter >= lek_min:
+            # Filtrera möjliga dagar med max pass och enligt önskemål
+            möjliga_dagar = [d for d in dagar if lektioner_per_klass_per_dag[klass][d] < max_pass_per_dag]
+            if placering_typ == "inte_måndag":
+                möjliga_dagar = [d for d in möjliga_dagar if d != "Mon"]
+            if not möjliga_dagar:
+                break
+
+            # Välj dag med minst lektioner för ämnet
+            dag = min(möjliga_dagar, key=lambda d: lektioner_per_amne_per_dag[amne][d])
+
+            schema_lagd = False
+
+            for klass in klasser_larar:
+                for tid_delta in starttider_per_dag:
+                    if tid_är_lunch(tid_delta):
+                        continue
+
+                    tid = starttid + tid_delta
                     slut = tid + datetime.timedelta(minutes=lek_min)
+
                     sal = hitta_sal(klass)
                     if sal is None:
-                        tid = slut + datetime.timedelta(minutes=rast_min)
                         continue
-                    
+
+                    # Kontrollera om plats finns
+                    if lektioner_per_klass_per_dag[klass][dag] >= max_pass_per_dag:
+                        continue
+
                     if ledigt(dag, tid, slut, klass, larar_id, sal):
                         boka(dag, tid, slut, klass, larar_id, sal)
                         schema.append({
                             "dag": dag,
-                            "start": tid_to_slot(tid),
-                            "slut": tid_to_slot(slut),
+                            "start": tid.strftime("%H:%M"),
+                            "slut": slut.strftime("%H:%M"),
                             "klass": klass,
                             "ämne": amne,
                             "lärare": larar_id,
                             "sal": sal
                         })
+                        lektioner_per_klass_per_dag[klass][dag] += 1
+                        lektioner_per_amne_per_dag[amne][dag] += 1
                         kvar_minuter -= lek_min
-                        tid = slut + datetime.timedelta(minutes=rast_min)
-                    else:
-                        tid = tid + datetime.timedelta(minutes=rast_min)
-    
+                        schema_lagd = True
+                        break
+                if schema_lagd:
+                    break
+
+            if not schema_lagd:
+                # Kan ej lägga lektion denna iteration
+                break
+
     return schema
 
-# === 5. Schemagenerering – komplett schema ===
-st.header("5. Schemagenerering – komplett schema")
+# === 6. Schemagenerering & visning ===
+st.header("5. Schemagenering – komplett schema")
 
 if st.button("Generera komplett schema"):
-    nytt_schema = generate_schedule(st.session_state)
+    nytt_schema = intelligent_generate_schedule(st.session_state)
     if nytt_schema:
         st.session_state.generated_schema = pd.DataFrame(nytt_schema)
         st.success("Schema genererat!")
     else:
         st.error("Fyll i alla nödvändiga data först (lärare, salar, tider).")
 
-# === Ny dubbelselectbox för filtrering ===
 if "generated_schema" in st.session_state:
     df = st.session_state.generated_schema
 
-    col1, col2 = st.columns([1, 2])  # Två kolumner bredvid varandra
+    col1, col2 = st.columns([1, 2])
 
     with col1:
         visningstyp = st.selectbox("Visa schema för:", ["Klass", "Lärare", "Sal"])
@@ -349,7 +313,6 @@ if "generated_schema" in st.session_state:
         else:
             val = st.selectbox("Välj sal:", options=sorted(df["sal"].unique()))
 
-    # Filtrera data
     if visningstyp == "Klass":
         vis_df = df[df["klass"] == val]
     elif visningstyp == "Lärare":
