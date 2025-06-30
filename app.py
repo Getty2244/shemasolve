@@ -41,12 +41,12 @@ if st.button("Spara färger", key="spara_farger_knapp"):
 st.header("2. Lägg till lärare")
 
 with st.form("larare_form"):
-    larar_id = st.text_input("Lärar-ID (ex: bgk1)")
-    amne = st.selectbox("Ämne", options=amnen)
-    undervisningstid = st.number_input("Undervisningsminuter per vecka", min_value=0, step=10)
-    larar_klasser = st.multiselect("Undervisar i klasser", options=klasser)
-    arbetsdagar = st.multiselect("Arbetsdagar", options=dagar_val, default=dagar_val)
-    onskemal = st.text_area("Extra önskemål (valfritt)")
+    larar_id = st.text_input("Lärar-ID (ex: bgk1)", key="input_larar_id")
+    amne = st.selectbox("Ämne", options=amnen, key="input_amne")
+    undervisningstid = st.number_input("Undervisningsminuter per vecka", min_value=0, step=10, key="input_undervisningstid")
+    larar_klasser = st.multiselect("Undervisar i klasser", options=klasser, key="input_larar_klasser")
+    arbetsdagar = st.multiselect("Arbetsdagar", options=dagar_val, default=dagar_val, key="input_arbetsdagar")
+    onskemal = st.text_area("Extra önskemål (valfritt)", key="input_onskemal")
 
     with st.expander("ℹ️ Se exempel på vanliga önskemål"):
         st.markdown("""
@@ -63,29 +63,42 @@ with st.form("larare_form"):
 
     skicka = st.form_submit_button("Lägg till lärare")
 
-if "larare_data" not in st.session_state:
-    st.session_state.larare_data = []
+if skicka:
+    if (st.session_state.input_larar_id and st.session_state.input_amne and
+        st.session_state.input_larar_klasser and st.session_state.input_arbetsdagar and
+        st.session_state.input_undervisningstid > 0):
 
-if "redigera_larare_index" not in st.session_state:
-    st.session_state.redigera_larare_index = None
+        ny_larare = {
+            "id": st.session_state.input_larar_id,
+            "ämne": st.session_state.input_amne,
+            "klasser": st.session_state.input_larar_klasser,
+            "dagar": st.session_state.input_arbetsdagar,
+            "minuter_per_vecka": st.session_state.input_undervisningstid,
+            "önskemål": st.session_state.input_onskemal or ""
+        }
+        if "larare_data" not in st.session_state:
+            st.session_state.larare_data = []
+        st.session_state.larare_data.append(ny_larare)
+        st.success(f"Lärare {st.session_state.input_larar_id} tillagd!")
 
-if skicka and larar_id and amne and larar_klasser and arbetsdagar and undervisningstid > 0:
-    ny_larare = {
-        "id": larar_id,
-        "ämne": amne,
-        "klasser": larar_klasser,
-        "dagar": arbetsdagar,
-        "minuter_per_vecka": undervisningstid,
-        "önskemål": onskemal or ""
-    }
-    st.session_state.larare_data.append(ny_larare)
-    st.success(f"Lärare {larar_id} tillagd!")
+        # Rensa formulärfälten
+        st.session_state.input_larar_id = ""
+        st.session_state.input_amne = amnen[0]
+        st.session_state.input_undervisningstid = 0
+        st.session_state.input_larar_klasser = []
+        st.session_state.input_arbetsdagar = dagar_val
+        st.session_state.input_onskemal = ""
+
+        rerun()
 
 # === Visa/redigera lärare ===
 st.subheader("📋 Inlagda lärare")
-if not st.session_state.larare_data:
+if "larare_data" not in st.session_state or not st.session_state.larare_data:
     st.info("Inga lärare inlagda ännu.")
 else:
+    if "redigera_larare_index" not in st.session_state:
+        st.session_state.redigera_larare_index = None
+
     for i, larare in enumerate(st.session_state.larare_data):
         if st.session_state.redigera_larare_index == i:
             st.write(f"✏️ Redigerar lärare **{larare['id']}**")
@@ -137,58 +150,119 @@ st.header("3. Lägg till sal")
 sal_typ = st.radio("Typ av sal", options=["Hemklassrum", "Ämnesklassrum"], horizontal=True)
 
 with st.form("sal_form"):
-    sal_namn = st.text_input("Salnamn (t.ex. A101, NO-labb)")
+    sal_namn = st.text_input("Salnamn (t.ex. A101, NO-labb)", key="input_sal_namn")
     sal_klass = None
     sal_amne = None
 
     if sal_typ == "Hemklassrum":
-        sal_klass = st.selectbox("Tilldelad klass", options=klasser)
+        sal_klass = st.selectbox("Tilldelad klass", options=klasser, key="input_sal_klass")
     else:
-        sal_amne = st.selectbox("Tilldelat ämne", options=amnen)
+        sal_amne = st.selectbox("Tilldelat ämne", options=amnen, key="input_sal_amne")
 
     sal_submit = st.form_submit_button("Lägg till sal")
 
 if "sal_data" not in st.session_state:
     st.session_state.sal_data = []
 
-if sal_submit and sal_namn:
+if sal_submit and st.session_state.input_sal_namn:
     ny_sal = {
-        "sal": sal_namn,
+        "sal": st.session_state.input_sal_namn,
         "typ": sal_typ,
-        "klass": sal_klass if sal_typ == "Hemklassrum" else None,
-        "ämne": sal_amne if sal_typ == "Ämnesklassrum" else None
+        "klass": st.session_state.input_sal_klass if sal_typ == "Hemklassrum" else None,
+        "ämne": st.session_state.input_sal_amne if sal_typ == "Ämnesklassrum" else None
     }
     st.session_state.sal_data.append(ny_sal)
-    st.success(f"Sal {sal_namn} tillagd!")
+    st.success(f"Sal {st.session_state.input_sal_namn} tillagd!")
+
+    # Rensa sal-formulär
+    st.session_state.input_sal_namn = ""
+    if sal_typ == "Hemklassrum":
+        st.session_state.input_sal_klass = klasser[0]
+    else:
+        st.session_state.input_sal_amne = amnen[0]
+    rerun()
+
+# Visa/redigera salar
+st.subheader("📋 Inlagda salar")
+if "sal_data" not in st.session_state or not st.session_state.sal_data:
+    st.info("Inga salar inlagda ännu.")
+else:
+    if "redigera_sal_index" not in st.session_state:
+        st.session_state.redigera_sal_index = None
+
+    for i, sal in enumerate(st.session_state.sal_data):
+        if st.session_state.redigera_sal_index == i:
+            st.write(f"✏️ Redigerar sal **{sal['sal']}**")
+            nytt_namn = st.text_input("Salnamn", value=sal["sal"], key=f"edit_sal_namn_{i}")
+            ny_typ = st.selectbox("Typ av sal", options=["Hemklassrum", "Ämnesklassrum"], index=["Hemklassrum", "Ämnesklassrum"].index(sal["typ"]), key=f"edit_sal_typ_{i}")
+
+            ny_klass = None
+            ny_amne = None
+            if ny_typ == "Hemklassrum":
+                ny_klass = st.selectbox("Tilldelad klass", options=klasser, index=klasser.index(sal["klass"]) if sal["klass"] else 0, key=f"edit_klass_{i}")
+            else:
+                ny_amne = st.selectbox("Tilldelat ämne", options=amnen, index=amnen.index(sal["ämne"]) if sal["ämne"] else 0, key=f"edit_amne_{i}")
+
+            if st.button("💾 Spara sal", key=f"spara_sal_{i}"):
+                st.session_state.sal_data[i] = {
+                    "sal": nytt_namn,
+                    "typ": ny_typ,
+                    "klass": ny_klass if ny_typ == "Hemklassrum" else None,
+                    "ämne": ny_amne if ny_typ == "Ämnesklassrum" else None
+                }
+                st.session_state.redigera_sal_index = None
+                rerun()
+
+            if st.button("❌ Ta bort", key=f"ta_bort_sal_{i}"):
+                st.session_state.sal_data.pop(i)
+                st.session_state.redigera_sal_index = None
+                rerun()
+
+            if st.button("Avbryt", key=f"avbryt_sal_{i}"):
+                st.session_state.redigera_sal_index = None
+                rerun()
+        else:
+            col1, col2 = st.columns([5, 1])
+            with col1:
+                info = f"{sal['sal']} – {sal['typ']}"
+                if sal["klass"]:
+                    info += f", klass: {sal['klass']}"
+                if sal["ämne"]:
+                    info += f", ämne: {sal['ämne']}"
+                st.write(info)
+            with col2:
+                if st.button("✏️ Redigera", key=f"redigera_sal_{i}"):
+                    st.session_state.redigera_sal_index = i
+                    rerun()
 
 # === 4. INSTÄLLNINGAR FÖR SKOLDAGEN ===
 st.header("4. Inställningar för skoldagen")
 
 with st.form("form_skoldag_tider"):
-    starttid_str = st.text_input("Skoldagens starttid (HH:MM)", value="08:30")
+    starttid_str = st.text_input("Skoldagens starttid (HH:MM)", value="08:30", key="input_starttid")
     sluttider = {}
     for dag in dagar_val:
-        sluttider[dag] = st.text_input(f"Sluttid för {dag} (HH:MM)", value="15:00")
-    lunchmin = st.number_input("Lunchrastens längd (min)", min_value=20, max_value=60, value=40)
-    lek_min = st.number_input("Minsta lektionslängd (min)", min_value=30, max_value=60, value=40)
-    lek_max = st.number_input("Max lektionslängd (min)", min_value=60, max_value=90, value=60)
-    rast_min = st.number_input("Minsta rast (min)", min_value=5, max_value=15, value=5)
-    rast_max = st.number_input("Största rast (min)", min_value=10, max_value=30, value=15)
+        sluttider[dag] = st.text_input(f"Sluttid för {dag} (HH:MM)", value="15:00", key=f"input_sluttid_{dag}")
+    lunchmin = st.number_input("Lunchrastens längd (min)", min_value=20, max_value=60, value=40, key="input_lunchmin")
+    lek_min = st.number_input("Minsta lektionslängd (min)", min_value=30, max_value=60, value=40, key="input_lek_min")
+    lek_max = st.number_input("Max lektionslängd (min)", min_value=60, max_value=90, value=60, key="input_lek_max")
+    rast_min = st.number_input("Minsta rast (min)", min_value=5, max_value=15, value=5, key="input_rast_min")
+    rast_max = st.number_input("Största rast (min)", min_value=10, max_value=30, value=15, key="input_rast_max")
 
     spara_tid = st.form_submit_button("Spara inställningar")
 
 if spara_tid:
     try:
-        starttid = datetime.datetime.strptime(starttid_str, "%H:%M").time()
-        sluttider_obj = {dag: datetime.datetime.strptime(t, "%H:%M").time() for dag, t in sluttider.items()}
+        starttid = datetime.datetime.strptime(st.session_state.input_starttid, "%H:%M").time()
+        sluttider_obj = {dag: datetime.datetime.strptime(st.session_state[f"input_sluttid_{dag}"], "%H:%M").time() for dag in dagar_val}
         st.session_state.daginst = {
             "starttid": starttid,
             "sluttider": sluttider_obj,
-            "lunch": lunchmin,
-            "lek_min": lek_min,
-            "lek_max": lek_max,
-            "rast_min": rast_min,
-            "rast_max": rast_max
+            "lunch": st.session_state.input_lunchmin,
+            "lek_min": st.session_state.input_lek_min,
+            "lek_max": st.session_state.input_lek_max,
+            "rast_min": st.session_state.input_rast_min,
+            "rast_max": st.session_state.input_rast_max
         }
         st.success("Skoldagens inställningar sparade!")
     except ValueError:
