@@ -1,4 +1,8 @@
 import streamlit as st
+from streamlit.runtime.scriptrunner.script_runner import RerunException, RerunData
+
+def rerun():
+    raise RerunException(RerunData())
 
 # --- Grunddata ---
 amnen = ["SO", "MA", "NO", "SV", "ENG", "IDROTT", "TRÄSLÖJD", "SY", "HK"]
@@ -63,6 +67,7 @@ if submitted:
         }
         st.session_state.larare_data.append(ny_larare)
         st.success(f"Lärare {larar_id} tillagd!")
+        rerun()
 
 # --- 3. Visa och redigera lärare ---
 st.subheader("📋 Inlagda lärare")
@@ -88,16 +93,16 @@ if st.session_state.larare_data:
                     "önskemål": nya_onskemal
                 }
                 st.session_state.redigera_larare_index = None
-                st.experimental_rerun()
+                rerun()
 
             if st.button("❌ Ta bort", key=f"ta_bort_larare_{i}"):
                 st.session_state.larare_data.pop(i)
                 st.session_state.redigera_larare_index = None
-                st.experimental_rerun()
+                rerun()
 
             if st.button("Avbryt", key=f"avbryt_larare_{i}"):
                 st.session_state.redigera_larare_index = None
-                st.experimental_rerun()
+                rerun()
 
         else:
             # Visa lärarinfo och redigeraknapp
@@ -107,6 +112,6 @@ if st.session_state.larare_data:
             with col2:
                 if st.button("✏️ Redigera", key=f"redigera_larare_{i}"):
                     st.session_state.redigera_larare_index = i
-                    st.experimental_rerun()
+                    rerun()
 else:
     st.info("Inga lärare inlagda ännu.")
