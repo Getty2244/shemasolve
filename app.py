@@ -77,8 +77,6 @@ if skicka and larar_id and amne and larar_klasser and arbetsdagar and undervisni
     st.session_state.larare_data.append(ny_larare)
     st.success(f"Lärare {larar_id} tillagd!")
 
-# Visa/redigera lärare (oförändrat, utelämnas här för korthet...)
-
 # === 3. LÄGG TILL SAL ===
 st.header("3. Lägg till sal")
 
@@ -321,7 +319,16 @@ if "generated_schema" in st.session_state:
         vis_df = df[df["sal"] == val]
 
     if not vis_df.empty:
-        st.dataframe(vis_df)
+        # Sortera schemat efter dag och starttid
+        vis_df = vis_df.sort_values(by=["dag", "start"])
+
+        # Färgkodning av ämneskolumn
+        def färgkod_amne(row):
+            färger = st.session_state.farg_val
+            färg = färger.get(row["ämne"], "#FFFFFF")
+            return [f"background-color: {färg}" if col == "ämne" else "" for col in row.index]
+
+        st.dataframe(vis_df.style.apply(färgkod_amne, axis=1), height=400)
     else:
         st.info("Inget schema hittades för det valet.")
 else:
