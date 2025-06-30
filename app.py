@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import datetime
+from streamlit.runtime.scriptrunner.script_runner import RerunException
 
 # === ÄMNEN OCH KLASSER ===
 amnen = ["SO", "MA", "NO", "SV", "ENG", "IDROTT", "TRÄSLÖJD", "SY", "HK"]
@@ -102,16 +103,16 @@ else:
                     "önskemål": nya_onskemal
                 }
                 st.session_state.redigera_larare_index = None
-                st.experimental_rerun()
+                raise RerunException()
 
             if st.button("❌ Ta bort", key=f"ta_bort_larare_{i}"):
                 st.session_state.larare_data.pop(i)
                 st.session_state.redigera_larare_index = None
-                st.experimental_rerun()
+                raise RerunException()
 
             if st.button("Avbryt", key=f"avbryt_larare_{i}"):
                 st.session_state.redigera_larare_index = None
-                st.experimental_rerun()
+                raise RerunException()
         else:
             col1, col2 = st.columns([6, 1])
             with col1:
@@ -125,7 +126,7 @@ else:
             with col2:
                 if st.button("✏️ Redigera", key=f"redigera_larare_{i}"):
                     st.session_state.redigera_larare_index = i
-                    st.experimental_rerun()
+                    raise RerunException()
 
 # === 3. LÄGG TILL SAL ===
 st.header("3. Lägg till sal")
@@ -210,12 +211,10 @@ def intelligent_generate_schedule(session_state):
 
     dagar_val = list(sluttider.keys())
 
-    # 1. Initiera räknare för spridning och max per dag
     lektioner_per_amne_per_dag = {amne: {dag: 0 for dag in dagar_val} for amne in amnen}
     lektioner_per_klass_per_dag = {klass: {dag: 0 for dag in dagar_val} for klass in klasser}
     max_pass_per_dag = 4
 
-    # 2. Tidsintervall för lektioner - spridda över dagen (justera tider efter behov)
     starttider_per_dag = [
         datetime.timedelta(hours=8, minutes=30),
         datetime.timedelta(hours=9, minutes=30),
@@ -231,9 +230,6 @@ def intelligent_generate_schedule(session_state):
 
     def tid_är_lunch(tid):
         return lunch_start <= tid < lunch_slut
-
-    def tid_to_slot(tid):
-        return tid.strftime("%H:%M")
 
     def ledigt(dag, start, slut, klass, larare, sal):
         for tid in bokningar_klass.get((dag, klass), []):
@@ -279,18 +275,14 @@ def intelligent_generate_schedule(session_state):
                     return sal["sal"]
             return None
 
-        # Sprid lektioner över dagar och tider
         while kvar_minuter >= lek_min:
-            # Filtrera möjliga dagar med max pass och enligt önskemål
             möjliga_dagar = [d for d in dagar if lektioner_per_klass_per_dag[klass][d] < max_pass_per_dag]
             if placering_typ == "inte_måndag":
                 möjliga_dagar = [d for d in möjliga_dagar if d != "Mon"]
             if not möjliga_dagar:
                 break
 
-            # Välj dag med minst lektioner för ämnet
             dag = min(möjliga_dagar, key=lambda d: lektioner_per_amne_per_dag[amne][d])
-
             schema_lagd = False
 
             for klass in klasser_larar:
@@ -305,7 +297,6 @@ def intelligent_generate_schedule(session_state):
                     if sal is None:
                         continue
 
-                    # Kontrollera om plats finns
                     if lektioner_per_klass_per_dag[klass][dag] >= max_pass_per_dag:
                         continue
 
@@ -329,13 +320,12 @@ def intelligent_generate_schedule(session_state):
                     break
 
             if not schema_lagd:
-                # Kan ej lägga lektion denna iteration
                 break
 
     return schema
 
 # === 6. Schemagenerering & visning ===
-st.header("5. Schemagenerering – komplett schema")
+st.header("5. Schemagenering – komplett schema")
 
 if st.button("Generera komplett schema"):
     nytt_schema = intelligent_generate_schedule(st.session_state)
@@ -369,10 +359,8 @@ if "generated_schema" in st.session_state:
         vis_df = df[df["sal"] == val]
 
     if not vis_df.empty:
-        # Sortera schemat efter dag och starttid
         vis_df = vis_df.sort_values(by=["dag", "start"])
 
-        # Färgkodning av ämneskolumn
         def färgkod_amne(row):
             färger = st.session_state.farg_val
             färg = färger.get(row["ämne"], "#FFFFFF")
