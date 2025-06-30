@@ -11,7 +11,7 @@ amnen = ["SO", "MA", "NO", "SV", "ENG", "IDROTT", "TRÄSLÖJD", "SY", "HK"]
 klasser = ["7a", "7b", "8a", "8b", "9a", "9b"]
 dagar_val = ["Mon", "Tue", "Wed", "Thu", "Fri"]
 
-# Initiera session_state variabler för formulärinputs om de saknas
+# Initiera session_state default-värden
 defaults = {
     "input_larar_id": "",
     "input_amne": amnen[0],
@@ -22,6 +22,7 @@ defaults = {
     "input_sal_namn": "",
     "input_sal_klass": klasser[0],
     "input_sal_amne": amnen[0],
+    "input_sal_typ": "Hemklassrum",
     "input_starttid": "08:30",
     "input_lunchmin": 40,
     "input_lek_min": 40,
@@ -45,7 +46,7 @@ if "farg_val" not in st.session_state:
 
 st.header("1. Färgval för ämnen")
 for amne in amnen:
-    col1, col2 = st.columns([3,1])
+    col1, col2 = st.columns([3, 1])
     with col1:
         st.session_state.temp_farg_val[amne] = st.color_picker(
             f"{amne}",
@@ -70,7 +71,7 @@ with st.form("larare_form"):
     arbetsdagar = st.multiselect("Arbetsdagar", options=dagar_val, default=dagar_val, key="input_arbetsdagar")
     onskemal = st.text_area("Extra önskemål (valfritt)", key="input_onskemal")
 
-    with st.expander("ℹ️ Exempel på önskemål"):
+    with st.expander("ℹ️ Exempel på extra önskemål"):
         st.markdown("""
         - Undvik SO på måndagar  
         - Idrott helst efter lunch  
@@ -99,7 +100,7 @@ with st.form("larare_form"):
             st.session_state.larare_data.append(ny_larare)
             st.success(f"Lärare {larar_id} tillagd!")
 
-            # Rensa inputfält efter submit:
+            # Rensa inputfält efter submit
             st.session_state.input_larar_id = ""
             st.session_state.input_amne = amnen[0]
             st.session_state.input_undervisningstid = 0
@@ -189,10 +190,11 @@ with st.form("sal_form"):
         st.session_state.sal_data.append(ny_sal)
         st.success(f"Sal {sal_namn} tillagd!")
 
-        # Rensa sal-formulär
+        # Rensa inputfält för sal
         st.session_state.input_sal_namn = ""
         st.session_state.input_sal_klass = klasser[0]
         st.session_state.input_sal_amne = amnen[0]
+
         rerun()
 
 # Visa/redigera salar
@@ -281,7 +283,7 @@ with st.form("form_skoldag_tider"):
         except ValueError:
             st.error("Felaktigt tidsformat. Använd HH:MM")
 
-# === 5. Schemagenerering - intelligent och komplett ===
+# === 5. Komplett intelligent schemaläggningsfunktion ===
 def intelligent_generate_schedule(session_state):
     import random
 
@@ -414,6 +416,7 @@ def intelligent_generate_schedule(session_state):
 
     return schema
 
+# === 6. Schemagenerering & visning ===
 st.header("5. Schemagenerering – komplett schema")
 
 if st.button("Generera komplett schema"):
