@@ -11,8 +11,8 @@ amnen = ["SO", "MA", "NO", "SV", "ENG", "IDROTT", "TRÄSLÖJD", "SY", "HK"]
 klasser = ["7a", "7b", "8a", "8b", "9a", "9b"]
 dagar_val = ["Mon", "Tue", "Wed", "Thu", "Fri"]
 
-# Initiera session_state default-värden
-defaults = {
+# Initiera session_state för inputfält om de inte finns (för att undvika StreamlitAPIException)
+for key, default in {
     "input_larar_id": "",
     "input_amne": amnen[0],
     "input_undervisningstid": 0,
@@ -22,25 +22,21 @@ defaults = {
     "input_sal_namn": "",
     "input_sal_klass": klasser[0],
     "input_sal_amne": amnen[0],
-    "input_sal_typ": "Hemklassrum",
     "input_starttid": "08:30",
     "input_lunchmin": 40,
     "input_lek_min": 40,
     "input_lek_max": 60,
     "input_rast_min": 5,
     "input_rast_max": 15,
-}
-
-for key, val in defaults.items():
+}.items():
     if key not in st.session_state:
-        st.session_state[key] = val
+        st.session_state[key] = default
 
 st.title("AI-schemaplanerare för skolan")
 
 # === 1. FÄRGVAL ===
 if "temp_farg_val" not in st.session_state:
     st.session_state.temp_farg_val = {amne: "#FFFFFF" for amne in amnen}
-
 if "farg_val" not in st.session_state:
     st.session_state.farg_val = {amne: "#FFFFFF" for amne in amnen}
 
@@ -56,13 +52,12 @@ for amne in amnen:
     with col2:
         st.write(st.session_state.temp_farg_val[amne])
 
-if st.button("Spara färger"):
+if st.button("Spara färger", key="spara_farger_knapp"):
     st.session_state.farg_val = st.session_state.temp_farg_val.copy()
     st.success("Färger sparade!")
 
 # === 2. LÄGG TILL LÄRARE ===
 st.header("2. Lägg till lärare")
-
 with st.form("larare_form"):
     larar_id = st.text_input("Lärar-ID (ex: bgk1)", key="input_larar_id")
     amne = st.selectbox("Ämne", options=amnen, key="input_amne")
@@ -71,8 +66,9 @@ with st.form("larare_form"):
     arbetsdagar = st.multiselect("Arbetsdagar", options=dagar_val, default=dagar_val, key="input_arbetsdagar")
     onskemal = st.text_area("Extra önskemål (valfritt)", key="input_onskemal")
 
-    with st.expander("ℹ️ Exempel på extra önskemål"):
+    with st.expander("ℹ️ Se exempel på vanliga önskemål"):
         st.markdown("""
+        **Exempel på extra önskemål:**
         - Undvik SO på måndagar  
         - Idrott helst efter lunch  
         - NO bör ej ligga första lektionen  
@@ -100,7 +96,7 @@ with st.form("larare_form"):
             st.session_state.larare_data.append(ny_larare)
             st.success(f"Lärare {larar_id} tillagd!")
 
-            # Rensa inputfält efter submit
+            # Rensa formulärfält
             st.session_state.input_larar_id = ""
             st.session_state.input_amne = amnen[0]
             st.session_state.input_undervisningstid = 0
@@ -110,7 +106,7 @@ with st.form("larare_form"):
 
             rerun()
 
-# Visa/redigera lärare
+# Visa och redigera lärare
 st.subheader("📋 Inlagda lärare")
 if "larare_data" not in st.session_state or not st.session_state.larare_data:
     st.info("Inga lärare inlagda ännu.")
@@ -166,12 +162,14 @@ else:
 # === 3. LÄGG TILL SAL ===
 st.header("3. Lägg till sal")
 
+sal_typ = st.radio("Typ av sal", options=["Hemklassrum", "Ämnesklassrum"], horizontal=True)
+
 with st.form("sal_form"):
-    sal_typ = st.radio("Typ av sal", options=["Hemklassrum", "Ämnesklassrum"], horizontal=True, key="input_sal_typ")
     sal_namn = st.text_input("Salnamn (t.ex. A101, NO-labb)", key="input_sal_namn")
     sal_klass = None
     sal_amne = None
-    if st.session_state.input_sal_typ == "Hemklassrum":
+
+    if sal_typ == "Hemklassrum":
         sal_klass = st.selectbox("Tilldelad klass", options=klasser, key="input_sal_klass")
     else:
         sal_amne = st.selectbox("Tilldelat ämne", options=amnen, key="input_sal_amne")
@@ -181,16 +179,16 @@ with st.form("sal_form"):
     if sal_submit and sal_namn:
         ny_sal = {
             "sal": sal_namn,
-            "typ": st.session_state.input_sal_typ,
-            "klass": sal_klass if st.session_state.input_sal_typ == "Hemklassrum" else None,
-            "ämne": sal_amne if st.session_state.input_sal_typ == "Ämnesklassrum" else None
+            "typ": sal_typ,
+            "klass": sal_klass if sal_typ == "Hemklassrum" else None,
+            "ämne": sal_amne if sal_typ == "Ämnesklassrum" else None
         }
         if "sal_data" not in st.session_state:
             st.session_state.sal_data = []
         st.session_state.sal_data.append(ny_sal)
         st.success(f"Sal {sal_namn} tillagd!")
 
-        # Rensa inputfält för sal
+        # Rensa sal-formulär
         st.session_state.input_sal_namn = ""
         st.session_state.input_sal_klass = klasser[0]
         st.session_state.input_sal_amne = amnen[0]
@@ -209,14 +207,17 @@ else:
         if st.session_state.redigera_sal_index == i:
             st.write(f"✏️ Redigerar sal **{sal['sal']}**")
             nytt_namn = st.text_input("Salnamn", value=sal["sal"], key=f"edit_sal_namn_{i}")
-            ny_typ = st.selectbox("Typ av sal", options=["Hemklassrum", "Ämnesklassrum"], index=["Hemklassrum", "Ämnesklassrum"].index(sal["typ"]), key=f"edit_sal_typ_{i}")
+            ny_typ = st.selectbox("Typ av sal", options=["Hemklassrum", "Ämnesklassrum"],
+                                  index=["Hemklassrum", "Ämnesklassrum"].index(sal["typ"]), key=f"edit_sal_typ_{i}")
 
             ny_klass = None
             ny_amne = None
             if ny_typ == "Hemklassrum":
-                ny_klass = st.selectbox("Tilldelad klass", options=klasser, index=klasser.index(sal["klass"]) if sal["klass"] else 0, key=f"edit_klass_{i}")
+                ny_klass = st.selectbox("Tilldelad klass", options=klasser,
+                                       index=klasser.index(sal["klass"]) if sal["klass"] else 0, key=f"edit_klass_{i}")
             else:
-                ny_amne = st.selectbox("Tilldelat ämne", options=amnen, index=amnen.index(sal["ämne"]) if sal["ämne"] else 0, key=f"edit_amne_{i}")
+                ny_amne = st.selectbox("Tilldelat ämne", options=amnen,
+                                      index=amnen.index(sal["ämne"]) if sal["ämne"] else 0, key=f"edit_amne_{i}")
 
             if st.button("💾 Spara sal", key=f"spara_sal_{i}"):
                 st.session_state.sal_data[i] = {
@@ -417,7 +418,7 @@ def intelligent_generate_schedule(session_state):
     return schema
 
 # === 6. Schemagenerering & visning ===
-st.header("5. Schemagenerering – komplett schema")
+st.header("5. Schemagenering – komplett schema")
 
 if st.button("Generera komplett schema"):
     nytt_schema = intelligent_generate_schedule(st.session_state)
