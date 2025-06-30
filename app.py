@@ -1,7 +1,10 @@
 import streamlit as st
 import pandas as pd
 import datetime
-from streamlit.runtime.scriptrunner.script_runner import RerunException
+from streamlit.runtime.scriptrunner.script_runner import RerunException, RerunData
+
+def rerun():
+    raise RerunException(RerunData())
 
 # === ÄMNEN OCH KLASSER ===
 amnen = ["SO", "MA", "NO", "SV", "ENG", "IDROTT", "TRÄSLÖJD", "SY", "HK"]
@@ -103,16 +106,16 @@ else:
                     "önskemål": nya_onskemal
                 }
                 st.session_state.redigera_larare_index = None
-                raise RerunException()
+                rerun()
 
             if st.button("❌ Ta bort", key=f"ta_bort_larare_{i}"):
                 st.session_state.larare_data.pop(i)
                 st.session_state.redigera_larare_index = None
-                raise RerunException()
+                rerun()
 
             if st.button("Avbryt", key=f"avbryt_larare_{i}"):
                 st.session_state.redigera_larare_index = None
-                raise RerunException()
+                rerun()
         else:
             col1, col2 = st.columns([6, 1])
             with col1:
@@ -126,7 +129,7 @@ else:
             with col2:
                 if st.button("✏️ Redigera", key=f"redigera_larare_{i}"):
                     st.session_state.redigera_larare_index = i
-                    raise RerunException()
+                    rerun()
 
 # === 3. LÄGG TILL SAL ===
 st.header("3. Lägg till sal")
