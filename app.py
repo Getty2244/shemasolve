@@ -11,6 +11,20 @@ amnen = ["SO", "MA", "NO", "SV", "ENG", "IDROTT", "TRÄSLÖJD", "SY", "HK"]
 klasser = ["7a", "7b", "8a", "8b", "9a", "9b"]
 dagar_val = ["Mon", "Tue", "Wed", "Thu", "Fri"]
 
+# Initiera session_state-variabler för inputfält (för att undvika StreamlitAPIException)
+if "input_larar_id" not in st.session_state:
+    st.session_state.input_larar_id = ""
+if "input_amne" not in st.session_state:
+    st.session_state.input_amne = amnen[0]
+if "input_undervisningstid" not in st.session_state:
+    st.session_state.input_undervisningstid = 0
+if "input_larar_klasser" not in st.session_state:
+    st.session_state.input_larar_klasser = []
+if "input_arbetsdagar" not in st.session_state:
+    st.session_state.input_arbetsdagar = dagar_val
+if "input_onskemal" not in st.session_state:
+    st.session_state.input_onskemal = ""
+
 st.title("AI-schemaplanerare för skolan")
 
 # === 1. FÄRGVAL ===
