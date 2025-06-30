@@ -1,69 +1,66 @@
 import streamlit as st
 import pandas as pd
 import datetime
+from streamlit.runtime.scriptrunner.script_runner import RerunException, RerunData
+
+def rerun():
+    raise RerunException(RerunData())
 
 # === ÄMNEN OCH KLASSER ===
 amnen = ["SO", "MA", "NO", "SV", "ENG", "IDROTT", "TRÄSLÖJD", "SY", "HK"]
 klasser = ["7a", "7b", "8a", "8b", "9a", "9b"]
 dagar_val = ["Mon", "Tue", "Wed", "Thu", "Fri"]
 
+# Initiera session_state-variabler för inputfält (om de saknas)
+if "input_larar_id" not in st.session_state:
+    st.session_state.input_larar_id = ""
+if "input_amne" not in st.session_state:
+    st.session_state.input_amne = amnen[0]
+if "input_undervisningstid" not in st.session_state:
+    st.session_state.input_undervisningstid = 0
+if "input_larar_klasser" not in st.session_state:
+    st.session_state.input_larar_klasser = []
+if "input_arbetsdagar" not in st.session_state:
+    st.session_state.input_arbetsdagar = dagar_val
+if "input_onskemal" not in st.session_state:
+    st.session_state.input_onskemal = ""
+
+# Initiera sal_typ i session_state om saknas
+if "sal_typ" not in st.session_state:
+    st.session_state.sal_typ = "Hemklassrum"
+if "input_sal_namn" not in st.session_state:
+    st.session_state.input_sal_namn = ""
+if "input_sal_klass" not in st.session_state:
+    st.session_state.input_sal_klass = klasser[0]
+if "input_sal_amne" not in st.session_state:
+    st.session_state.input_sal_amne = amnen[0]
+
 st.title("AI-schemaplanerare för skolan")
 
-# Initiera session_state-variabler om de saknas
+# === 1. FÄRGVAL ===
 if "temp_farg_val" not in st.session_state:
     st.session_state.temp_farg_val = {amne: "#FFFFFF" for amne in amnen}
 if "farg_val" not in st.session_state:
     st.session_state.farg_val = {amne: "#FFFFFF" for amne in amnen}
 
-if "larare_data" not in st.session_state:
-    st.session_state.larare_data = []
-if "redigera_larare_index" not in st.session_state:
-    st.session_state.redigera_larare_index = None
-
-if "sal_data" not in st.session_state:
-    st.session_state.sal_data = []
-if "redigera_sal_index" not in st.session_state:
-    st.session_state.redigera_sal_index = None
-
-# === 1. Färgval ===
 st.header("1. Färgval för ämnen")
 for amne in amnen:
-    col1, col2 = st.columns([3,1])
+    col1, col2 = st.columns([3, 1])
     with col1:
-        st.session_state.temp_farg_val[amne] = st.color_picker(f"{amne}", st.session_state.temp_farg_val[amne], key=f"farg_{amne}")
+        st.session_state.temp_farg_val[amne] = st.color_picker(
+            f"{amne}",
+            st.session_state.temp_farg_val[amne],
+            key=f"farg_{amne}"
+        )
     with col2:
         st.write(st.session_state.temp_farg_val[amne])
 
-if st.button("Spara färger"):
+if st.button("Spara färger", key="spara_farger_knapp"):
     st.session_state.farg_val = st.session_state.temp_farg_val.copy()
     st.success("Färger sparade!")
 
-# === 2. Lägg till lärare ===
-def lagg_till_larare():
-    if (st.session_state.input_larar_id.strip() and
-        st.session_state.input_amne and
-        st.session_state.input_larar_klasser and
-        st.session_state.input_arbetsdagar and
-        st.session_state.input_undervisningstid > 0):
-
-        ny_larare = {
-            "id": st.session_state.input_larar_id.strip(),
-            "ämne": st.session_state.input_amne,
-            "klasser": st.session_state.input_larar_klasser,
-            "dagar": st.session_state.input_arbetsdagar,
-            "minuter_per_vecka": st.session_state.input_undervisningstid,
-            "önskemål": st.session_state.input_onskemal or ""
-        }
-        st.session_state.larare_data.append(ny_larare)
-        st.success(f"Lärare {ny_larare['id']} tillagd!")
-
-        # Rensa inputfält
-        st.session_state.input_larar_id = ""
-        st.session_state.input_amne = amnen[0]
-        st.session_state.input_undervisningstid = 0
-        st.session_state.input_larar_klasser = []
-        st.session_state.input_arbetsdagar = dagar_val.copy()
-        st.session_state.input_onskemal = ""
+# === 2. LÄGG TILL LÄRARE ===
+st.header("2. Lägg till lärare")
 
 with st.form("larare_form"):
     larar_id = st.text_input("Lärar-ID (ex: bgk1)", key="input_larar_id")
@@ -72,8 +69,10 @@ with st.form("larare_form"):
     larar_klasser = st.multiselect("Undervisar i klasser", options=klasser, key="input_larar_klasser")
     arbetsdagar = st.multiselect("Arbetsdagar", options=dagar_val, default=dagar_val, key="input_arbetsdagar")
     onskemal = st.text_area("Extra önskemål (valfritt)", key="input_onskemal")
-    with st.expander("ℹ️ Exempel på önskemål"):
+
+    with st.expander("ℹ️ Se exempel på vanliga önskemål"):
         st.markdown("""
+        **Exempel på extra önskemål:**
         - Undvik SO på måndagar  
         - Idrott helst efter lunch  
         - NO bör ej ligga första lektionen  
@@ -84,11 +83,44 @@ with st.form("larare_form"):
         - Mentorstid varje tisdag 10:00
         """)
 
-    st.form_submit_button("Lägg till lärare", on_click=lagg_till_larare)
+    skicka = st.form_submit_button("Lägg till lärare")
 
-# Visa och redigera lärare
+if skicka:
+    if (st.session_state.input_larar_id and st.session_state.input_amne and
+        st.session_state.input_larar_klasser and st.session_state.input_arbetsdagar and
+        st.session_state.input_undervisningstid > 0):
+
+        ny_larare = {
+            "id": st.session_state.input_larar_id,
+            "ämne": st.session_state.input_amne,
+            "klasser": st.session_state.input_larar_klasser,
+            "dagar": st.session_state.input_arbetsdagar,
+            "minuter_per_vecka": st.session_state.input_undervisningstid,
+            "önskemål": st.session_state.input_onskemal or ""
+        }
+        if "larare_data" not in st.session_state:
+            st.session_state.larare_data = []
+        st.session_state.larare_data.append(ny_larare)
+        st.success(f"Lärare {st.session_state.input_larar_id} tillagd!")
+
+        # Rensa formulärfälten
+        st.session_state.input_larar_id = ""
+        st.session_state.input_amne = amnen[0]
+        st.session_state.input_undervisningstid = 0
+        st.session_state.input_larar_klasser = []
+        st.session_state.input_arbetsdagar = dagar_val
+        st.session_state.input_onskemal = ""
+
+        rerun()
+
+# === Visa/redigera lärare ===
 st.subheader("📋 Inlagda lärare")
-if st.session_state.larare_data:
+if "larare_data" not in st.session_state or not st.session_state.larare_data:
+    st.info("Inga lärare inlagda ännu.")
+else:
+    if "redigera_larare_index" not in st.session_state:
+        st.session_state.redigera_larare_index = None
+
     for i, larare in enumerate(st.session_state.larare_data):
         if st.session_state.redigera_larare_index == i:
             st.write(f"✏️ Redigerar lärare **{larare['id']}**")
@@ -109,66 +141,74 @@ if st.session_state.larare_data:
                     "önskemål": nya_onskemal
                 }
                 st.session_state.redigera_larare_index = None
-                st.experimental_rerun()
+                rerun()
 
             if st.button("❌ Ta bort", key=f"ta_bort_larare_{i}"):
                 st.session_state.larare_data.pop(i)
                 st.session_state.redigera_larare_index = None
-                st.experimental_rerun()
+                rerun()
 
             if st.button("Avbryt", key=f"avbryt_larare_{i}"):
                 st.session_state.redigera_larare_index = None
-                st.experimental_rerun()
+                rerun()
         else:
-            col1, col2 = st.columns([6,1])
+            col1, col2 = st.columns([6, 1])
             with col1:
                 st.markdown(f"""
                 - **{larare['id']}** ({larare['ämne']})  
                   Klasser: {', '.join(larare['klasser'])}  
                   Dagar: {', '.join(larare['dagar'])}  
                   Minuter/vecka: {larare['minuter_per_vecka']}  
-                  Önskemål: _{larare.get('önskemål', '')}_
+                  Önskemål: _{larare.get('önskemål', '')}_  
                 """)
             with col2:
                 if st.button("✏️ Redigera", key=f"redigera_larare_{i}"):
                     st.session_state.redigera_larare_index = i
-                    st.experimental_rerun()
-else:
-    st.info("Inga lärare inlagda ännu.")
+                    rerun()
 
-# === 3. Lägg till sal ===
-def lagg_till_sal():
-    if st.session_state.input_sal_namn.strip():
-        ny_sal = {
-            "sal": st.session_state.input_sal_namn.strip(),
-            "typ": st.session_state.sal_typ,
-            "klass": st.session_state.input_sal_klass if st.session_state.sal_typ == "Hemklassrum" else None,
-            "ämne": st.session_state.input_sal_amne if st.session_state.sal_typ == "Ämnesklassrum" else None
-        }
-        st.session_state.sal_data.append(ny_sal)
-        st.success(f"Sal {ny_sal['sal']} tillagd!")
-
-        st.session_state.input_sal_namn = ""
-        if st.session_state.sal_typ == "Hemklassrum":
-            st.session_state.input_sal_klass = klasser[0]
-        else:
-            st.session_state.input_sal_amne = amnen[0]
+# === 3. LÄGG TILL SAL ===
+st.header("3. Lägg till sal")
 
 with st.form("sal_form"):
-    st.session_state.sal_typ = st.radio("Typ av sal", options=["Hemklassrum", "Ämnesklassrum"], horizontal=True, key="sal_typ")
+    sal_typ = st.radio("Typ av sal", options=["Hemklassrum", "Ämnesklassrum"], horizontal=True, key="sal_typ")
     sal_namn = st.text_input("Salnamn (t.ex. A101, NO-labb)", key="input_sal_namn")
-    sal_klass = None
-    sal_amne = None
+
     if st.session_state.sal_typ == "Hemklassrum":
         sal_klass = st.selectbox("Tilldelad klass", options=klasser, key="input_sal_klass")
     else:
         sal_amne = st.selectbox("Tilldelat ämne", options=amnen, key="input_sal_amne")
 
-    st.form_submit_button("Lägg till sal", on_click=lagg_till_sal)
+    sal_submit = st.form_submit_button("Lägg till sal")
 
-# Visa och redigera salar
+if "sal_data" not in st.session_state:
+    st.session_state.sal_data = []
+
+if sal_submit and st.session_state.input_sal_namn:
+    ny_sal = {
+        "sal": st.session_state.input_sal_namn,
+        "typ": st.session_state.sal_typ,
+        "klass": st.session_state.input_sal_klass if st.session_state.sal_typ == "Hemklassrum" else None,
+        "ämne": st.session_state.input_sal_amne if st.session_state.sal_typ == "Ämnesklassrum" else None
+    }
+    st.session_state.sal_data.append(ny_sal)
+    st.success(f"Sal {st.session_state.input_sal_namn} tillagd!")
+
+    # Rensa sal-formulär
+    st.session_state.input_sal_namn = ""
+    if st.session_state.sal_typ == "Hemklassrum":
+        st.session_state.input_sal_klass = klasser[0]
+    else:
+        st.session_state.input_sal_amne = amnen[0]
+    rerun()
+
+# Visa/redigera salar
 st.subheader("📋 Inlagda salar")
-if st.session_state.sal_data:
+if "sal_data" not in st.session_state or not st.session_state.sal_data:
+    st.info("Inga salar inlagda ännu.")
+else:
+    if "redigera_sal_index" not in st.session_state:
+        st.session_state.redigera_sal_index = None
+
     for i, sal in enumerate(st.session_state.sal_data):
         if st.session_state.redigera_sal_index == i:
             st.write(f"✏️ Redigerar sal **{sal['sal']}**")
@@ -190,18 +230,18 @@ if st.session_state.sal_data:
                     "ämne": ny_amne if ny_typ == "Ämnesklassrum" else None
                 }
                 st.session_state.redigera_sal_index = None
-                st.experimental_rerun()
+                rerun()
 
             if st.button("❌ Ta bort", key=f"ta_bort_sal_{i}"):
                 st.session_state.sal_data.pop(i)
                 st.session_state.redigera_sal_index = None
-                st.experimental_rerun()
+                rerun()
 
             if st.button("Avbryt", key=f"avbryt_sal_{i}"):
                 st.session_state.redigera_sal_index = None
-                st.experimental_rerun()
+                rerun()
         else:
-            col1, col2 = st.columns([5,1])
+            col1, col2 = st.columns([5, 1])
             with col1:
                 info = f"{sal['sal']} – {sal['typ']}"
                 if sal["klass"]:
@@ -212,11 +252,9 @@ if st.session_state.sal_data:
             with col2:
                 if st.button("✏️ Redigera", key=f"redigera_sal_{i}"):
                     st.session_state.redigera_sal_index = i
-                    st.experimental_rerun()
-else:
-    st.info("Inga salar inlagda ännu.")
+                    rerun()
 
-# === 4. Inställningar skoldag ===
+# === 4. INSTÄLLNINGAR FÖR SKOLDAGEN ===
 st.header("4. Inställningar för skoldagen")
 
 with st.form("form_skoldag_tider"):
@@ -249,7 +287,7 @@ if spara_tid:
     except ValueError:
         st.error("Felaktigt tidsformat. Använd HH:MM")
 
-# === 5. Schemagenerering ===
+# === 5. Komplett intelligent schemaläggningsfunktion ===
 def intelligent_generate_schedule(session_state):
     import random
 
@@ -382,7 +420,8 @@ def intelligent_generate_schedule(session_state):
 
     return schema
 
-st.header("5. Schemagenerering – komplett schema")
+# === 6. Schemagenerering & visning ===
+st.header("5. Schemagenering – komplett schema")
 
 if st.button("Generera komplett schema"):
     nytt_schema = intelligent_generate_schedule(st.session_state)
@@ -396,8 +435,10 @@ if "generated_schema" in st.session_state:
     df = st.session_state.generated_schema
 
     col1, col2 = st.columns([1, 2])
+
     with col1:
         visningstyp = st.selectbox("Visa schema för:", ["Klass", "Lärare", "Sal"])
+
     with col2:
         if visningstyp == "Klass":
             val = st.selectbox("Välj klass:", options=sorted(df["klass"].unique()))
