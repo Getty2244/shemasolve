@@ -14,12 +14,16 @@ if "farg_val" not in st.session_state:
     st.session_state.farg_val = {amne: "#FFFFFF" for amne in amnen}
 if "farg_saved_val" not in st.session_state:
     st.session_state.farg_saved_val = {amne: None for amne in amnen}
-if "farg_show_bock" not in st.session_state:
-    st.session_state.farg_show_bock = False
+if "farg_changed" not in st.session_state:
+    st.session_state.farg_changed = {amne: False for amne in amnen}
 if "larare" not in st.session_state:
     st.session_state.larare = []
 if "red_larare" not in st.session_state:
     st.session_state.red_larare = None
+if "timplan" not in st.session_state:
+    st.session_state.timplan = {
+        amne: {"7": 120, "8": 120, "9": 120} for amne in amnen
+    }
 if "salar" not in st.session_state:
     st.session_state.salar = []
 if "red_salar" not in st.session_state:
@@ -27,36 +31,31 @@ if "red_salar" not in st.session_state:
 if "saltyp" not in st.session_state:
     st.session_state.saltyp = "Hemklassrum"
 
-st.title("Skolplanerare – Steg 1–3")
+st.title("Skolplanerare – Steg 1–4")
 
 # --- Steg 1: Färgval ---
 st.header("1. Färgval per ämne")
 
-# Initiera flaggor vid behov
-if "farg_changed" not in st.session_state:
-    st.session_state.farg_changed = {amne: False for amne in amnen}
-
 with st.form("farg_form"):
-    färg_input = {}
+    farg_input = {}
     for amne in amnen:
         col1, col2 = st.columns([3, 1])
         with col1:
-            färg_input[amne] = st.color_picker(amne, value=st.session_state.farg_val[amne], key=f"farg_{amne}")
+            farg_input[amne] = st.color_picker(amne, value=st.session_state.farg_val[amne], key=f"farg_{amne}")
         with col2:
-            hexkod = färg_input[amne]
+            hexkod = farg_input[amne]
             if st.session_state.farg_changed.get(amne, False):
                 st.markdown(f"`{hexkod}` ✔️")
             else:
                 st.markdown(f"`{hexkod}`")
-    if st.form_submit_button("💾 Spara färger"):
+    if st.form_submit_button("📅 Spara färger"):
         for amne in amnen:
             old = st.session_state.farg_val[amne]
-            new = färg_input[amne]
+            new = farg_input[amne]
             st.session_state.farg_changed[amne] = old != new
             st.session_state.farg_val[amne] = new
             st.session_state.farg_saved_val[amne] = new
         st.success("Färger sparade!")
-
 
 # --- Steg 2: Lärare ---
 st.header("2. Lärare")
@@ -91,7 +90,7 @@ for i, l in enumerate(st.session_state.larare):
             dag = st.multiselect("Arbetsdagar", dagar, default=l["dagar"], key=f"dagar_{i}")
             onske = st.text_area("Önskemål", value=l["önskemål"], key=f"onske_{i}")
             col1, col2, col3 = st.columns(3)
-            if col1.form_submit_button("💾 Spara"):
+            if col1.form_submit_button("📅 Spara"):
                 st.session_state.larare[i] = {
                     "id": lid,
                     "ämne": amne,
@@ -105,7 +104,7 @@ for i, l in enumerate(st.session_state.larare):
             if col2.form_submit_button("↩️ Avbryt"):
                 st.session_state.red_larare = None
                 rerun()
-            if col3.form_submit_button("🗑️ Ta bort"):
+            if col3.form_submit_button("🚑 Ta bort"):
                 st.session_state.larare.pop(i)
                 st.session_state.red_larare = None
                 rerun()
@@ -117,8 +116,36 @@ for i, l in enumerate(st.session_state.larare):
             if st.button("✏️", key=f"edit_larare_{i}"):
                 st.session_state.red_larare = i
 
-# --- Steg 3: Salar ---
-st.header("3. Salar")
+# --- Steg 3: Lokal timplan per årskurs ---
+st.header("3. Lokal timplan (minuter/vecka per ämne och årskurs)")
+
+with st.form("timplan_form"):
+    for amne in amnen:
+        st.markdown(f"**{amne}**")
+        col7, col8, col9 = st.columns(3)
+        with col7:
+            st.session_state.timplan[amne]["7"] = col7.number_input(
+                f"Åk 7", min_value=0, step=10,
+                value=st.session_state.timplan[amne]["7"],
+                key=f"timplan_{amne}_7"
+            )
+        with col8:
+            st.session_state.timplan[amne]["8"] = col8.number_input(
+                f"Åk 8", min_value=0, step=10,
+                value=st.session_state.timplan[amne]["8"],
+                key=f"timplan_{amne}_8"
+            )
+        with col9:
+            st.session_state.timplan[amne]["9"] = col9.number_input(
+                f"Åk 9", min_value=0, step=10,
+                value=st.session_state.timplan[amne]["9"],
+                key=f"timplan_{amne}_9"
+            )
+    if st.form_submit_button("📅 Spara timplan"):
+        st.success("Timplan sparad!")
+
+# --- Steg 4: Salar ---
+st.header("4. Salar")
 
 st.radio("Typ av sal", ["Hemklassrum", "Ämnesklassrum"], horizontal=True, key="saltyp")
 
@@ -152,7 +179,7 @@ for i, s in enumerate(st.session_state.salar):
                 amne = st.selectbox("Tilldelat ämne", amnen, index=amnen.index(s["ämne"]), key=f"sal_amne_{i}")
                 klass = None
             col1, col2, col3 = st.columns(3)
-            if col1.form_submit_button("💾 Spara"):
+            if col1.form_submit_button("📅 Spara"):
                 st.session_state.salar[i] = {
                     "sal": namn,
                     "typ": typ,
@@ -164,7 +191,7 @@ for i, s in enumerate(st.session_state.salar):
             if col2.form_submit_button("↩️ Avbryt"):
                 st.session_state.red_salar = None
                 rerun()
-            if col3.form_submit_button("🗑️ Ta bort"):
+            if col3.form_submit_button("🚑 Ta bort"):
                 st.session_state.salar.pop(i)
                 st.session_state.red_salar = None
                 rerun()
