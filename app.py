@@ -32,6 +32,10 @@ st.title("Skolplanerare – Steg 1–3")
 # --- Steg 1: Färgval ---
 st.header("1. Färgval per ämne")
 
+# Initiera "ändrade"-flaggor om de saknas
+if "farg_changed" not in st.session_state:
+    st.session_state.farg_changed = {amne: False for amne in amnen}
+
 with st.form("farg_form"):
     färg_input = {}
     for amne in amnen:
@@ -39,14 +43,16 @@ with st.form("farg_form"):
         with col1:
             färg_input[amne] = st.color_picker(amne, value=st.session_state.farg_val[amne], key=f"farg_{amne}")
         with col2:
-            if st.session_state.farg_show_bock and st.session_state.farg_saved_val[amne] != färg_input[amne]:
+            if st.session_state.farg_changed.get(amne, False):
                 st.markdown("✔️")
     if st.form_submit_button("💾 Spara färger"):
         for amne in amnen:
-            st.session_state.farg_val[amne] = färg_input[amne]
-            st.session_state.farg_saved_val[amne] = färg_input[amne]
-        st.session_state.farg_show_bock = True
-        st.success("Valda färger sparade!")
+            old = st.session_state.farg_val[amne]
+            new = färg_input[amne]
+            st.session_state.farg_changed[amne] = old != new
+            st.session_state.farg_val[amne] = new
+            st.session_state.farg_saved_val[amne] = new
+        st.success("Färger sparade!")
 
 # --- Steg 2: Lärare ---
 st.header("2. Lärare")
