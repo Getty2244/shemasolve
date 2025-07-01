@@ -1,5 +1,6 @@
 import streamlit as st
 from streamlit.runtime.scriptrunner import RerunException, RerunData
+import datetime
 
 def rerun():
     raise RerunException(RerunData())
@@ -30,8 +31,20 @@ if "red_salar" not in st.session_state:
     st.session_state.red_salar = None
 if "saltyp" not in st.session_state:
     st.session_state.saltyp = "Hemklassrum"
+if "daginst" not in st.session_state:
+    default_start = datetime.time(8, 30)
+    default_end = {dag: datetime.time(15, 0) for dag in dagar}
+    st.session_state.daginst = {
+        "starttid": default_start,
+        "sluttider": default_end,
+        "lunch": 40,
+        "lek_min": 40,
+        "lek_max": 60,
+        "rast_min": 5,
+        "rast_max": 15
+    }
 
-st.title("Skolplanerare – Steg 1–4")
+st.title("Skolplanerare – Steg 1–5")
 
 # --- Steg 1: Färgval ---
 st.header("1. Färgval per ämne")
@@ -144,66 +157,32 @@ with st.form("timplan_form"):
     if st.form_submit_button("📅 Spara timplan"):
         st.success("Timplan sparad!")
 
-# --- Steg 4: Salar ---
-st.header("4. Salar")
+# --- Steg 4: Inställningar för skoldagen ---
+st.header("4. Inställningar för skoldagen")
 
-st.radio("Typ av sal", ["Hemklassrum", "Ämnesklassrum"], horizontal=True, key="saltyp")
-
-with st.form("add_sal", clear_on_submit=True):
-    namn = st.text_input("Salnamn")
-    if st.session_state.saltyp == "Hemklassrum":
-        klass = st.selectbox("Tilldelad klass", klasser, key="klass_sal")
-        amne = None
-    else:
-        amne = st.selectbox("Tilldelat ämne", amnen, key="amne_sal")
-        klass = None
-    if st.form_submit_button("➕ Lägg till sal"):
-        st.session_state.salar.append({
-            "sal": namn,
-            "typ": st.session_state.saltyp,
-            "klass": klass,
-            "ämne": amne
-        })
-        st.success(f"Sal {namn} tillagd!")
-
-st.subheader("📋 Inlagda salar")
-for i, s in enumerate(st.session_state.salar):
-    if st.session_state.red_salar == i:
-        with st.form(f"edit_sal_{i}"):
-            namn = st.text_input("Salnamn", value=s["sal"], key=f"sal_namn_{i}")
-            typ = st.radio("Typ", ["Hemklassrum", "Ämnesklassrum"], index=0 if s["typ"] == "Hemklassrum" else 1, key=f"sal_typ_{i}")
-            if typ == "Hemklassrum":
-                klass = st.selectbox("Tilldelad klass", klasser, index=klasser.index(s["klass"]), key=f"sal_klass_{i}")
-                amne = None
-            else:
-                amne = st.selectbox("Tilldelat ämne", amnen, index=amnen.index(s["ämne"]), key=f"sal_amne_{i}")
-                klass = None
-            col1, col2, col3 = st.columns(3)
-            if col1.form_submit_button("📅 Spara"):
-                st.session_state.salar[i] = {
-                    "sal": namn,
-                    "typ": typ,
-                    "klass": klass,
-                    "ämne": amne
-                }
-                st.session_state.red_salar = None
-                rerun()
-            if col2.form_submit_button("↩️ Avbryt"):
-                st.session_state.red_salar = None
-                rerun()
-            if col3.form_submit_button("🚑 Ta bort"):
-                st.session_state.salar.pop(i)
-                st.session_state.red_salar = None
-                rerun()
-    else:
-        col1, col2 = st.columns([6, 1])
-        with col1:
-            info = f"{s['sal']} – {s['typ']}"
-            if s["klass"]:
-                info += f", klass: {s['klass']}"
-            if s["ämne"]:
-                info += f", ämne: {s['ämne']}"
-            st.write(info)
-        with col2:
-            if st.button("✏️", key=f"edit_sal_{i}"):
-                st.session_state.red_salar = i
+with st.form("daginst_form"):
+    starttid_str = st.text_input("Starttid (HH:MM)", value=st.session_state.daginst["starttid"].strftime("%H:%M"))
+    sluttider = {}
+    for dag in dagar:
+        sluttider[dag] = st.text_input(f"Sluttid {dag} (HH:MM)", value=st.session_state.daginst["sluttider"][dag].strftime("%H:%M"))
+    lunch = st.number_input("Lunchrastens längd (min)", min_value=20, max_value=60, value=st.session_state.daginst["lunch"])
+    lek_min = st.number_input("Minsta lektionslängd (min)", min_value=30, max_value=60, value=st.session_state.daginst["lek_min"])
+    lek_max = st.number_input("Största lektionslängd (min)", min_value=60, max_value=90, value=st.session_state.daginst["lek_max"])
+    rast_min = st.number_input("Minsta rast (min)", min_value=5, max_value=15, value=st.session_state.daginst["rast_min"])
+    rast_max = st.number_input("Största rast (min)", min_value=10, max_value=30, value=st.session_state.daginst["rast_max"])
+    if st.form_submit_button("Spara inställningar"):
+        try:
+            start = datetime.datetime.strptime(starttid_str, "%H:%M").time()
+            end_obj = {dag: datetime.datetime.strptime(t, "%H:%M").time() for dag, t in sluttider.items()}
+            st.session_state.daginst = {
+                "starttid": start,
+                "sluttider": end_obj,
+                "lunch": lunch,
+                "lek_min": lek_min,
+                "lek_max": lek_max,
+                "rast_min": rast_min,
+                "rast_max": rast_max
+            }
+            st.success("Inställningar sparade!")
+        except:
+            st.error("Felaktigt tidsformat. Använd HH:MM")
