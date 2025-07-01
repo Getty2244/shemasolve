@@ -277,41 +277,5 @@ else:
             use_container_width=True
         )
 
-# --- Steg 6: Visuell schemavy med filter ---
-st.header("6. Visuell schemavy")
-
-if "generated_schema" not in st.session_state or st.session_state.generated_schema.empty:
-    st.info("Inget schema genererat ännu.")
-else:
-    df = st.session_state.generated_schema.copy()
-
-    col1, col2 = st.columns([1, 2])
-    with col1:
-        filtrera_typ = st.selectbox("Visa schema för:", ["Lärare", "Klass", "Sal"])
-    with col2:
-        if filtrera_typ == "Lärare":
-            val = st.selectbox("Välj lärare:", sorted(df["lärare"].unique()))
-            filtrerat = df[df["lärare"] == val]
-        elif filtrera_typ == "Klass":
-            val = st.selectbox("Välj klass:", sorted(df["klass"].unique()))
-            filtrerat = df[df["klass"] == val]
-        else:
-            val = st.selectbox("Välj sal:", sorted(df["sal"].unique()))
-            filtrerat = df[df["sal"] == val]
-
-    if filtrerat.empty:
-        st.warning("Inga lektioner hittades.")
-    else:
-        filtrerat = filtrerat.sort_values(by=["dag", "start"])
-
-        def färgkodning(row):
-            f = st.session_state.farg_val.get(row["ämne"], "#FFFFFF")
-            return [f"background-color: {f}" if col == "ämne" else "" for col in row.index]
-
-        st.dataframe(
-            filtrerat.style.apply(färgkodning, axis=1),
-            height=400,
-            use_container_width=True
-        )
 
 
