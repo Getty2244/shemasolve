@@ -240,6 +240,81 @@ with st.form("daginst_form"):
         except:
             st.error("Felaktigt tidsformat. Använd HH:MM")
 
+# --- Steg 5.5: Generera schema (med spridning) ---
+st.header("5.5 Generera schema")
+
+import pandas as pd
+import random
+
+if st.button("📅 Generera schema"):
+    lektioner = []
+    schemat = {}
+    dagar = ["Mon", "Tue", "Wed", "Thu", "Fri"]
+    tider = list(range(8, 17))  # timmar 8–16
+    max_per_dag = 2  # max 2 lektioner per dag per lärare
+
+    def är_ledig(dag, tid, klass, sal, larare):
+        key = f"{dag}_{tid}"
+        if key not in schemat:
+            return True
+        bokade = schemat[key]
+        return not (
+            klass in bokade["klass"] or
+            sal in bokade["sal"] or
+            larare in bokade["larare"]
+        )
+
+    dagräknare = {}  # larare -> dag -> antal lektioner
+
+    for lar in st.session_state.larare:
+        minuter_kvar = lar["minuter"]
+        lektionslängd = 40
+        antal = minuter_kvar // lektionslängd
+        dagräknare[lar["id"]] = {dag: 0 for dag in dagar}
+
+        möjliga = [(dag, tid) for dag in lar["dagar"] for tid in tider]
+        random.shuffle(möjliga)
+
+        placerade = 0
+        for dag, tid in möjliga:
+            if placerade >= antal:
+                break
+            if dagräknare[lar["id"]][dag] >= max_per_dag:
+                continue
+            klass = random.choice(lar["klasser"])
+
+            matchande_sal = None
+            for s in st.session_state.salar:
+                if s["typ"] == "Hemklassrum" and s["klass"] == klass:
+                    matchande_sal = s["sal"]
+                elif s["typ"] == "Ämnesklassrum" and s["ämne"] == lar["ämne"]:
+                    matchande_sal = s["sal"]
+            sal = matchande_sal or "Saknas"
+
+            if är_ledig(dag, tid, klass, sal, lar["id"]):
+                key = f"{dag}_{tid}"
+                if key not in schemat:
+                    schemat[key] = {"klass": set(), "sal": set(), "larare": set()}
+                schemat[key]["klass"].add(klass)
+                schemat[key]["sal"].add(sal)
+                schemat[key]["larare"].add(lar["id"])
+
+                lektioner.append({
+                    "dag": dag,
+                    "start": f"{tid}:00",
+                    "slut": f"{tid+1}:00",
+                    "klass": klass,
+                    "ämne": lar["ämne"],
+                    "lärare": lar["id"],
+                    "sal": sal
+                })
+                dagräknare[lar["id"]][dag] += 1
+                placerade += 1
+
+    st.session_state.generated_schema = pd.DataFrame(lektioner)
+    st.success("✅ Schema genererat med spridning och begränsningar!")
+
+
 # --- Steg 6: Visuell schemavy med filter ---
 st.header("6. Visuell schemavy")
 
