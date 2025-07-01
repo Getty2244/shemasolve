@@ -14,6 +14,8 @@ if "farg_val" not in st.session_state:
     st.session_state.farg_val = {amne: "#FFFFFF" for amne in amnen}
 if "farg_saved_val" not in st.session_state:
     st.session_state.farg_saved_val = {amne: None for amne in amnen}
+if "farg_changed" not in st.session_state:
+    st.session_state.farg_changed = {amne: False for amne in amnen}
 if "larare" not in st.session_state:
     st.session_state.larare = []
 if "red_larare" not in st.session_state:
@@ -29,19 +31,24 @@ st.title("Skolplanerare – Steg 1–3")
 
 # --- Steg 1: Färgval ---
 st.header("1. Färgval per ämne")
+
 with st.form("farg_form"):
     for amne in amnen:
         col1, col2 = st.columns([3, 1])
         with col1:
             ny_farg = st.color_picker(amne, value=st.session_state.farg_val[amne], key=f"farg_{amne}")
         with col2:
-            if st.session_state.farg_saved_val[amne] == ny_farg:
+            if st.session_state.farg_changed.get(amne, False):
                 st.markdown("✔️")
         st.session_state.farg_val[amne] = ny_farg
+
     if st.form_submit_button("💾 Spara färger"):
         for amne in amnen:
-            st.session_state.farg_saved_val[amne] = st.session_state.farg_val[amne]
-        st.success("Färger sparade!")
+            tidigare = st.session_state.farg_saved_val.get(amne)
+            nuvarande = st.session_state.farg_val[amne]
+            st.session_state.farg_changed[amne] = tidigare != nuvarande
+            st.session_state.farg_saved_val[amne] = nuvarande
+        st.success("Valda färger sparade!")
 
 # --- Steg 2: Lärare ---
 st.header("2. Lärare")
@@ -105,7 +112,6 @@ for i, l in enumerate(st.session_state.larare):
 # --- Steg 3: Salar ---
 st.header("3. Salar")
 
-# Dynamisk saltyp
 st.radio("Typ av sal", ["Hemklassrum", "Ämnesklassrum"], horizontal=True, key="saltyp")
 
 with st.form("add_sal", clear_on_submit=True):
