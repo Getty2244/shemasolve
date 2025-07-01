@@ -8,8 +8,8 @@ dagar = ["Mon", "Tue", "Wed", "Thu", "Fri"]
 # --- Session state ---
 if "farg_val" not in st.session_state:
     st.session_state.farg_val = {amne: "#FFFFFF" for amne in amnen}
-if "farg_saved" not in st.session_state:
-    st.session_state.farg_saved = False
+if "farg_saved_val" not in st.session_state:
+    st.session_state.farg_saved_val = {amne: None for amne in amnen}
 if "larare" not in st.session_state:
     st.session_state.larare = []
 if "red_larare" not in st.session_state:
@@ -18,6 +18,8 @@ if "salar" not in st.session_state:
     st.session_state.salar = []
 if "red_salar" not in st.session_state:
     st.session_state.red_salar = None
+if "saltyp" not in st.session_state:
+    st.session_state.saltyp = "Hemklassrum"
 
 st.title("Skolplanerare – Steg 1–3")
 
@@ -27,12 +29,14 @@ with st.form("farg_form"):
     for amne in amnen:
         col1, col2 = st.columns([3, 1])
         with col1:
-            st.session_state.farg_val[amne] = st.color_picker(amne, value=st.session_state.farg_val[amne], key=f"farg_{amne}")
+            ny_farg = st.color_picker(amne, value=st.session_state.farg_val[amne], key=f"farg_{amne}")
         with col2:
-            if st.session_state.farg_saved:
+            if st.session_state.farg_saved_val[amne] and st.session_state.farg_saved_val[amne] != st.session_state.farg_val[amne]:
                 st.markdown("✔️")
+        st.session_state.farg_val[amne] = ny_farg
     if st.form_submit_button("💾 Spara färger"):
-        st.session_state.farg_saved = True
+        for amne in amnen:
+            st.session_state.farg_saved_val[amne] = st.session_state.farg_val[amne]
         st.success("Färger sparade!")
 
 # --- Steg 2: Lärare ---
@@ -94,54 +98,53 @@ for i, l in enumerate(st.session_state.larare):
 # --- Steg 3: Salar ---
 st.header("3. Salar")
 
-if st.session_state.red_salar is None:
-    with st.form("add_sal", clear_on_submit=True):
-        typ = st.radio("Typ", ["Hemklassrum", "Ämnesklassrum"], horizontal=True, key="saltyp")
-        namn = st.text_input("Salnamn")
-        if typ == "Hemklassrum":
-            klass = st.selectbox("Tilldelad klass", klasser, key="klass_sal")
-            amne = None
-        else:
-            amne = st.selectbox("Tilldelat ämne", amnen, key="amne_sal")
-            klass = None
-        if st.form_submit_button("➕ Lägg till sal"):
-            st.session_state.salar.append({
-                "sal": namn,
-                "typ": typ,
-                "klass": klass,
-                "ämne": amne
-            })
-            st.success(f"Sal {namn} tillagd!")
-else:
-    i = st.session_state.red_salar
-    s = st.session_state.salar[i]
-    with st.form(f"edit_sal_{i}"):
-        namn = st.text_input("Salnamn", value=s["sal"], key=f"sal_namn_{i}")
-        typ = st.radio("Typ", ["Hemklassrum", "Ämnesklassrum"], index=0 if s["typ"] == "Hemklassrum" else 1, key=f"sal_typ_{i}")
-        if typ == "Hemklassrum":
-            klass = st.selectbox("Tilldelad klass", klasser, index=klasser.index(s["klass"]), key=f"sal_klass_{i}")
-            amne = None
-        else:
-            amne = st.selectbox("Tilldelat ämne", amnen, index=amnen.index(s["ämne"]), key=f"sal_amne_{i}")
-            klass = None
-        col1, col2 = st.columns(2)
-        if col1.form_submit_button("💾 Spara sal"):
-            st.session_state.salar[i] = {
-                "sal": namn,
-                "typ": typ,
-                "klass": klass,
-                "ämne": amne
-            }
-            st.session_state.red_salar = None
-            st.experimental_rerun()
-        if col2.form_submit_button("🗑️ Ta bort"):
-            st.session_state.salar.pop(i)
-            st.session_state.red_salar = None
-            st.experimental_rerun()
+# Dynamisk saltyp
+st.radio("Typ av sal", ["Hemklassrum", "Ämnesklassrum"], horizontal=True, key="saltyp")
+
+with st.form("add_sal", clear_on_submit=True):
+    namn = st.text_input("Salnamn")
+    if st.session_state.saltyp == "Hemklassrum":
+        klass = st.selectbox("Tilldelad klass", klasser, key="klass_sal")
+        amne = None
+    else:
+        amne = st.selectbox("Tilldelat ämne", amnen, key="amne_sal")
+        klass = None
+    if st.form_submit_button("➕ Lägg till sal"):
+        st.session_state.salar.append({
+            "sal": namn,
+            "typ": st.session_state.saltyp,
+            "klass": klass,
+            "ämne": amne
+        })
+        st.success(f"Sal {namn} tillagd!")
 
 st.subheader("📋 Inlagda salar")
 for i, s in enumerate(st.session_state.salar):
-    if st.session_state.red_salar != i:
+    if st.session_state.red_salar == i:
+        with st.form(f"edit_sal_{i}"):
+            namn = st.text_input("Salnamn", value=s["sal"], key=f"sal_namn_{i}")
+            typ = st.radio("Typ", ["Hemklassrum", "Ämnesklassrum"], index=0 if s["typ"] == "Hemklassrum" else 1, key=f"sal_typ_{i}")
+            if typ == "Hemklassrum":
+                klass = st.selectbox("Tilldelad klass", klasser, index=klasser.index(s["klass"]), key=f"sal_klass_{i}")
+                amne = None
+            else:
+                amne = st.selectbox("Tilldelat ämne", amnen, index=amnen.index(s["ämne"]), key=f"sal_amne_{i}")
+                klass = None
+            col1, col2 = st.columns(2)
+            if col1.form_submit_button("💾 Spara sal"):
+                st.session_state.salar[i] = {
+                    "sal": namn,
+                    "typ": typ,
+                    "klass": klass,
+                    "ämne": amne
+                }
+                st.session_state.red_salar = None
+                st.experimental_rerun()
+            if col2.form_submit_button("🗑️ Ta bort"):
+                st.session_state.salar.pop(i)
+                st.session_state.red_salar = None
+                st.experimental_rerun()
+    else:
         col1, col2 = st.columns([6, 1])
         with col1:
             info = f"{s['sal']} – {s['typ']}"
