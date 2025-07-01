@@ -44,11 +44,10 @@ if "daginst" not in st.session_state:
         "rast_max": 15
     }
 
-st.title("Skolplanerare – Steg 1–5")
+st.title("Skolplanerare")
 
-# --- Steg 1: Färgval ---
+# --- Steg 1: Färgval per ämne ---
 st.header("1. Färgval per ämne")
-
 with st.form("farg_form"):
     farg_input = {}
     for amne in amnen:
@@ -72,7 +71,6 @@ with st.form("farg_form"):
 
 # --- Steg 2: Lärare ---
 st.header("2. Lärare")
-
 with st.form("add_larare", clear_on_submit=True):
     lid = st.text_input("Lärar-ID")
     amne = st.selectbox("Ämne", amnen)
@@ -131,7 +129,6 @@ for i, l in enumerate(st.session_state.larare):
 
 # --- Steg 3: Lokal timplan per årskurs ---
 st.header("3. Lokal timplan (minuter/vecka per ämne och årskurs)")
-
 with st.form("timplan_form"):
     for amne in amnen:
         st.markdown(f"**{amne}**")
@@ -157,9 +154,65 @@ with st.form("timplan_form"):
     if st.form_submit_button("📅 Spara timplan"):
         st.success("Timplan sparad!")
 
-# --- Steg 4: Inställningar för skoldagen ---
-st.header("4. Inställningar för skoldagen")
+# --- Steg 4: Salar ---
+st.header("4. Salar")
+with st.form("sal_form", clear_on_submit=True):
+    saltyp = st.radio("Typ av sal", options=["Hemklassrum", "Ämnesklassrum"], horizontal=True)
+    namn = st.text_input("Salnamn")
+    sal_klass = None
+    sal_amne = None
+    if saltyp == "Hemklassrum":
+        sal_klass = st.selectbox("Tilldelad klass", klasser)
+    else:
+        sal_amne = st.selectbox("Tilldelat ämne", amnen)
+    if st.form_submit_button("➕ Lägg till sal"):
+        st.session_state.salar.append({
+            "sal": namn,
+            "typ": saltyp,
+            "klass": sal_klass,
+            "ämne": sal_amne
+        })
+        st.success(f"Sal {namn} tillagd!")
 
+st.subheader("📋 Inlagda salar")
+for i, s in enumerate(st.session_state.salar):
+    if st.session_state.red_salar == i:
+        with st.form(f"edit_sal_{i}"):
+            namn = st.text_input("Salnamn", s["sal"], key=f"sal_namn_{i}")
+            saltyp = st.selectbox("Typ", ["Hemklassrum", "Ämnesklassrum"], index=["Hemklassrum", "Ämnesklassrum"].index(s["typ"]), key=f"typ_{i}")
+            sal_klass = None
+            sal_amne = None
+            if saltyp == "Hemklassrum":
+                sal_klass = st.selectbox("Tilldelad klass", klasser, index=klasser.index(s.get("klass", klasser[0])), key=f"klass_{i}")
+            else:
+                sal_amne = st.selectbox("Tilldelat ämne", amnen, index=amnen.index(s.get("ämne", amnen[0])), key=f"amne_{i}")
+            col1, col2, col3 = st.columns(3)
+            if col1.form_submit_button("📅 Spara"):
+                st.session_state.salar[i] = {
+                    "sal": namn,
+                    "typ": saltyp,
+                    "klass": sal_klass,
+                    "ämne": sal_amne
+                }
+                st.session_state.red_salar = None
+                rerun()
+            if col2.form_submit_button("↩️ Avbryt"):
+                st.session_state.red_salar = None
+                rerun()
+            if col3.form_submit_button("🚑 Ta bort"):
+                st.session_state.salar.pop(i)
+                st.session_state.red_salar = None
+                rerun()
+    else:
+        col1, col2 = st.columns([6, 1])
+        with col1:
+            st.markdown(f"**{s['sal']}** – {s['typ']} – {s.get('klass') or s.get('ämne')}")
+        with col2:
+            if st.button("✏️", key=f"edit_salar_{i}"):
+                st.session_state.red_salar = i
+
+# --- Steg 5: Inställningar för skoldagen ---
+st.header("5. Inställningar för skoldagen")
 with st.form("daginst_form"):
     starttid_str = st.text_input("Starttid (HH:MM)", value=st.session_state.daginst["starttid"].strftime("%H:%M"))
     sluttider = {}
