@@ -1,4 +1,8 @@
 import streamlit as st
+from streamlit.runtime.scriptrunner import RerunException, RerunData
+
+def rerun():
+    raise RerunException(RerunData())
 
 # --- Init ---
 amnen = ["SO", "MA", "NO", "SV", "ENG", "IDROTT", "TRÄSLÖJD", "SY", "HK"]
@@ -31,7 +35,7 @@ with st.form("farg_form"):
         with col1:
             ny_farg = st.color_picker(amne, value=st.session_state.farg_val[amne], key=f"farg_{amne}")
         with col2:
-            if st.session_state.farg_saved_val[amne] and st.session_state.farg_saved_val[amne] != st.session_state.farg_val[amne]:
+            if st.session_state.farg_saved_val[amne] == ny_farg:
                 st.markdown("✔️")
         st.session_state.farg_val[amne] = ny_farg
     if st.form_submit_button("💾 Spara färger"):
@@ -71,8 +75,8 @@ for i, l in enumerate(st.session_state.larare):
             kl = st.multiselect("Klasser", klasser, default=l["klasser"], key=f"klasser_{i}")
             dag = st.multiselect("Arbetsdagar", dagar, default=l["dagar"], key=f"dagar_{i}")
             onske = st.text_area("Önskemål", value=l["önskemål"], key=f"onske_{i}")
-            col1, col2 = st.columns(2)
-            if col1.form_submit_button("💾 Spara ändringar"):
+            col1, col2, col3 = st.columns(3)
+            if col1.form_submit_button("💾 Spara"):
                 st.session_state.larare[i] = {
                     "id": lid,
                     "ämne": amne,
@@ -82,11 +86,14 @@ for i, l in enumerate(st.session_state.larare):
                     "önskemål": onske.strip()
                 }
                 st.session_state.red_larare = None
-                st.experimental_rerun()
-            if col2.form_submit_button("🗑️ Ta bort"):
+                rerun()
+            if col2.form_submit_button("↩️ Avbryt"):
+                st.session_state.red_larare = None
+                rerun()
+            if col3.form_submit_button("🗑️ Ta bort"):
                 st.session_state.larare.pop(i)
                 st.session_state.red_larare = None
-                st.experimental_rerun()
+                rerun()
     else:
         col1, col2 = st.columns([6, 1])
         with col1:
@@ -130,8 +137,8 @@ for i, s in enumerate(st.session_state.salar):
             else:
                 amne = st.selectbox("Tilldelat ämne", amnen, index=amnen.index(s["ämne"]), key=f"sal_amne_{i}")
                 klass = None
-            col1, col2 = st.columns(2)
-            if col1.form_submit_button("💾 Spara sal"):
+            col1, col2, col3 = st.columns(3)
+            if col1.form_submit_button("💾 Spara"):
                 st.session_state.salar[i] = {
                     "sal": namn,
                     "typ": typ,
@@ -139,11 +146,14 @@ for i, s in enumerate(st.session_state.salar):
                     "ämne": amne
                 }
                 st.session_state.red_salar = None
-                st.experimental_rerun()
-            if col2.form_submit_button("🗑️ Ta bort"):
+                rerun()
+            if col2.form_submit_button("↩️ Avbryt"):
+                st.session_state.red_salar = None
+                rerun()
+            if col3.form_submit_button("🗑️ Ta bort"):
                 st.session_state.salar.pop(i)
                 st.session_state.red_salar = None
-                st.experimental_rerun()
+                rerun()
     else:
         col1, col2 = st.columns([6, 1])
         with col1:
