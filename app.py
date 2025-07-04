@@ -9,11 +9,17 @@ import io
 def rerun():
     raise RerunException(RerunData())
 
+# --- Globala listor ---
+amnen = ["SO", "MA", "NO", "SV", "ENG", "IDROTT", "TRÄSLÖJD", "SY", "HK"]
+dagar = ["Mon", "Tue", "Wed", "Thu", "Fri"]
+
 # --- Steg 0: Klasser ---
 st.header("0. Klasser")
 
 if "klasser" not in st.session_state:
     st.session_state.klasser = ["7a", "7b", "8a", "8b", "9a", "9b"]
+if "edit_klass" not in st.session_state:
+    st.session_state.edit_klass = None
 
 with st.form("klass_form", clear_on_submit=True):
     ny_klass = st.text_input("Lägg till ny klass")
@@ -25,13 +31,35 @@ with st.form("klass_form", clear_on_submit=True):
 if st.session_state.klasser:
     st.markdown("**Inlagda klasser:**")
     sorted_klasser = sorted(st.session_state.klasser)
-    cols = st.columns(len(sorted_klasser))
-    for i, klass in enumerate(sorted_klasser):
-        with cols[i]:
-            st.markdown(f"**{klass}**")
-            if st.button("❌", key=f"del_{klass}"):
-                st.session_state.klasser.remove(klass)
-                rerun()
+    col_count = min(5, len(sorted_klasser))  # max 5 per rad
+    rows = [sorted_klasser[i:i+col_count] for i in range(0, len(sorted_klasser), col_count)]
+
+    for row in rows:
+        cols = st.columns(len(row))
+        for i, klass in enumerate(row):
+            with cols[i]:
+                if st.session_state.edit_klass == klass:
+                    ny_val = st.text_input("Redigera", value=klass, key=f"edit_input_{klass}")
+                    col1, col2 = st.columns([1, 1])
+                    with col1:
+                        if st.button("✅", key=f"save_{klass}"):
+                            if ny_val and ny_val != klass and ny_val not in st.session_state.klasser:
+                                idx = st.session_state.klasser.index(klass)
+                                st.session_state.klasser[idx] = ny_val
+                            st.session_state.edit_klass = None
+                            rerun()
+                    with col2:
+                        if st.button("↩️", key=f"cancel_{klass}"):
+                            st.session_state.edit_klass = None
+                            rerun()
+                else:
+                    st.markdown(f"**{klass}**")
+                    if st.button("✏️", key=f"edit_{klass}"):
+                        st.session_state.edit_klass = klass
+                    if st.button("❌", key=f"del_{klass}"):
+                        st.session_state.klasser.remove(klass)
+                        rerun()
+
 
 
 
