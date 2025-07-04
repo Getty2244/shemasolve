@@ -47,6 +47,8 @@ if "klasser" not in st.session_state:
     st.session_state.klasser = ["7a", "7b", "8a", "8b", "9a", "9b"]
 if "edit_arskurs" not in st.session_state:
     st.session_state.edit_arskurs = None
+if "klass_delete_flag" not in st.session_state:
+    st.session_state.klass_delete_flag = None
 
 # Lägg till ny klass
 with st.form("klass_form", clear_on_submit=True):
@@ -71,21 +73,27 @@ if st.session_state.klasser:
         if st.session_state.edit_arskurs == ar:
             with st.form(f"edit_form_{ar}"):
                 nya_klasser = []
-                col_klasser = st.columns(len(kl_list))
+                del_keys = []
+                cols = st.columns(len(kl_list))
                 for i, klass in enumerate(kl_list):
-                    with col_klasser[i]:
-                        nya_namn = st.text_input("", value=klass, key=f"edit_{ar}_{i}")
-                        nya_klasser.append(nya_namn)
+                    with cols[i]:
+                        ny = st.text_input("", value=klass, key=f"edit_{ar}_{i}")
+                        nya_klasser.append(ny)
+                        del_key = f"del_{ar}_{i}"
+                        del_keys.append(del_key)
+                        st.form_submit_button("🗑️", key=del_key)
 
-                        if st.button("🗑️", key=f"del_{ar}_{i}"):
-                            if klass in st.session_state.klasser:
-                                st.session_state.klasser.remove(klass)
-                                rerun()
+                # Kontrollera om någon ta bort-knapp tryckts
+                for i, del_key in enumerate(del_keys):
+                    if st.session_state.get(del_key):
+                        klass_att_ta_bort = kl_list[i]
+                        if klass_att_ta_bort in st.session_state.klasser:
+                            st.session_state.klasser.remove(klass_att_ta_bort)
+                            rerun()
 
                 col1, col2 = st.columns([1, 1])
                 with col1:
                     if st.form_submit_button("✅ Spara"):
-                        # Uppdatera namn
                         for gammal, ny in zip(kl_list, nya_klasser):
                             if ny != gammal and ny not in st.session_state.klasser:
                                 idx = st.session_state.klasser.index(gammal)
@@ -100,6 +108,7 @@ if st.session_state.klasser:
             st.markdown(", ".join(f"`{klass}`" for klass in kl_list))
             if st.button(f"✏️ Redigera årskurs {ar}", key=f"edit_knapp_{ar}"):
                 st.session_state.edit_arskurs = ar
+
 
 
 
