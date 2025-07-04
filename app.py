@@ -54,6 +54,20 @@ if st.session_state.klasser:
             if st.button(f"✏️ Redigera årskurs {ar}", key=f"edit_knapp_{ar}"):
                 st.session_state.edit_arskurs = ar
 
+# --- Skapa dynamisk lista med årskurser baserat på inlagda klasser ---
+alla_ar = sorted(set(k[0] for k in st.session_state.klasser if k and k[0].isdigit()))
+
+# Säkerställ att timplan finns för dessa årskurser
+if "timplan" not in st.session_state:
+    st.session_state.timplan = {amne: {ar: 120 for ar in alla_ar} for amne in amnen}
+else:
+    # Lägg till eventuellt saknade årskurser i befintlig timplan
+    for amne in amnen:
+        for ar in alla_ar:
+            if ar not in st.session_state.timplan[amne]:
+                st.session_state.timplan[amne][ar] = 120
+
+
 
 
 # --- Steg 1: Färgval ---
