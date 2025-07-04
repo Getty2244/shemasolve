@@ -1,27 +1,12 @@
-# --- Import och funktioner ---
-import streamlit as st
-from streamlit.runtime.scriptrunner import RerunException, RerunData
-import datetime
-import pandas as pd
-import random
-import io
-
-def rerun():
-    raise RerunException(RerunData())
-
-# --- Globala listor ---
-amnen = ["SO", "MA", "NO", "SV", "ENG", "IDROTT", "TRÄSLÖJD", "SY", "HK"]
-dagar = ["Mon", "Tue", "Wed", "Thu", "Fri"]
-
 # --- Steg 0: Klasser ---
 st.header("0. Klasser")
 
 if "klasser" not in st.session_state:
     st.session_state.klasser = ["7a", "7b", "8a", "8b", "9a", "9b"]
-if "edit_klass" not in st.session_state:
-    st.session_state.edit_klass = None
+if "edit_arskurs" not in st.session_state:
+    st.session_state.edit_arskurs = None
 
-# Formulär för att lägga till ny klass
+# Lägg till ny klass
 with st.form("klass_form", clear_on_submit=True):
     ny_klass = st.text_input("Lägg till ny klass")
     if st.form_submit_button("➕ Lägg till klass"):
@@ -29,9 +14,9 @@ with st.form("klass_form", clear_on_submit=True):
             st.session_state.klasser.append(ny_klass)
             rerun()
 
-# Gruppvisning per årskurs (t.ex. alla 7:or ihop)
+# Gruppvisning per årskurs
 if st.session_state.klasser:
-    st.markdown("**Inlagda klasser (grupperade):**")
+    st.markdown("**Inlagda klasser (per årskurs):**")
     grupper = {}
     for k in sorted(st.session_state.klasser):
         if k and k[0].isdigit():
@@ -41,28 +26,33 @@ if st.session_state.klasser:
 
     for ar, kl_list in grupper.items():
         st.markdown(f"**Årskurs {ar}:**")
-        cols = st.columns(len(kl_list))
-        for i, klass in enumerate(kl_list):
-            with cols[i]:
-                if st.session_state.edit_klass == klass:
-                    ny_val = st.text_input("Redigera", value=klass, key=f"edit_input_{klass}")
-                    col1, col2 = st.columns([1, 1])
-                    with col1:
-                        if st.button("✅", key=f"save_{klass}"):
-                            if ny_val and ny_val != klass and ny_val not in st.session_state.klasser:
-                                idx = st.session_state.klasser.index(klass)
-                                st.session_state.klasser[idx] = ny_val
-                            st.session_state.edit_klass = None
-                            rerun()
-                    with col2:
-                        if st.button("🗑", key=f"remove_{klass}"):
-                            st.session_state.klasser.remove(klass)
-                            st.session_state.edit_klass = None
-                            rerun()
-                else:
-                    st.markdown(f"**{klass}**")
-                    if st.button("✏️", key=f"edit_{klass}"):
-                        st.session_state.edit_klass = klass
+        if st.session_state.edit_arskurs == ar:
+            with st.form(f"edit_form_{ar}"):
+                cols = st.columns(len(kl_list))
+                nya_klasser = []
+                for i, klass in enumerate(kl_list):
+                    nya_klasser.append(cols[i].text_input(f"", value=klass, key=f"edit_{ar}_{i}"))
+                col1, col2 = st.columns([1, 1])
+                with col1:
+                    if st.form_submit_button("✅ Spara"):
+                        # Uppdatera klasser
+                        for gammal, ny in zip(kl_list, nya_klasser):
+                            if ny != gammal and ny not in st.session_state.klasser:
+                                idx = st.session_state.klasser.index(gammal)
+                                st.session_state.klasser[idx] = ny
+                        st.session_state.edit_arskurs = None
+                        rerun()
+                with col2:
+                    if st.form_submit_button("↩️ Avbryt"):
+                        st.session_state.edit_arskurs = None
+                        rerun()
+        else:
+            col_klasser = st.columns(len(kl_list))
+            for i, klass in enumerate(kl_list):
+                with col_klasser[i]:
+                    st.markdown(f"`{klass}`")
+            if st.button(f"✏️ Redigera årskurs {ar}", key=f"edit_knapp_{ar}"):
+                st.session_state.edit_arskurs = ar
 
 
 
