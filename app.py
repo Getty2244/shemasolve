@@ -390,7 +390,7 @@ else:
     st.info("Inget schema genererat ännu.")
 
 
-# --- Spara och ladda data med profilnamn ---
+# --- Steg 8: Spara och ladda data med profilnamn ---
 st.header("💾 Spara / Ladda schema")
 
 import pickle
