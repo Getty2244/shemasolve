@@ -1,3 +1,44 @@
+import streamlit as st
+from streamlit.runtime.scriptrunner import RerunException, RerunData
+import datetime
+import pandas as pd
+import random
+import io
+
+def rerun():
+    raise RerunException(RerunData())
+
+# Ämnen och vardagar
+amnen = ["SO", "MA", "NO", "SV", "ENG", "IDROTT", "TRÄSLÖJD", "SY", "HK"]
+dagar = ["Mon", "Tue", "Wed", "Thu", "Fri"]
+
+# Initiera session state
+if "klasser" not in st.session_state:
+    st.session_state.klasser = ["7a", "7b", "8a", "8b", "9a", "9b"]
+if "edit_arskurs" not in st.session_state:
+    st.session_state.edit_arskurs = None
+if "farg_val" not in st.session_state:
+    st.session_state.farg_val = {amne: "#FFFFFF" for amne in amnen}
+if "farg_saved_val" not in st.session_state:
+    st.session_state.farg_saved_val = {amne: None for amne in amnen}
+if "farg_changed" not in st.session_state:
+    st.session_state.farg_changed = {amne: False for amne in amnen}
+if "larare" not in st.session_state:
+    st.session_state.larare = []
+if "salar" not in st.session_state:
+    st.session_state.salar = []
+if "daginst" not in st.session_state:
+    default_start = datetime.time(8, 30)
+    default_end = {dag: datetime.time(15, 0) for dag in dagar}
+    st.session_state.daginst = {
+        "starttid": default_start,
+        "sluttider": default_end,
+        "lunch": 40,
+        "lek_min": 40,
+        "lek_max": 60,
+        "rast_min": 5,
+        "rast_max": 15
+    }
 # --- Steg 0: Klasser ---
 st.header("0. Klasser")
 
