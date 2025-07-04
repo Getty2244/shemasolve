@@ -73,15 +73,21 @@ if st.session_state.klasser:
                 cols = st.columns(len(kl_list))
                 nya_klasser = []
                 for i, klass in enumerate(kl_list):
-                    nya_klasser.append(cols[i].text_input(f"", value=klass, key=f"edit_{ar}_{i}"))
+                    with cols[i]:
+                        nya_klasser.append(st.text_input("", value=klass, key=f"edit_{ar}_{i}"))
+                if len(nya_klasser) < len(kl_list):
+                    nya_klasser += kl_list[len(nya_klasser):]
                 col1, col2 = st.columns([1, 1])
                 with col1:
                     if st.form_submit_button("✅ Spara"):
-                        # Uppdatera klasser
-                        for gammal, ny in zip(kl_list, nya_klasser):
-                            if ny != gammal and ny not in st.session_state.klasser:
-                                idx = st.session_state.klasser.index(gammal)
-                                st.session_state.klasser[idx] = ny
+                        uppdaterad_lista = []
+                        for ny in nya_klasser:
+                            if ny and ny not in uppdaterad_lista:
+                                uppdaterad_lista.append(ny)
+                        # Ta bort gamla klasser för årskursen
+                        st.session_state.klasser = [
+                            k for k in st.session_state.klasser if not (k[0] == ar if ar != "Övrigt" else not k[0].isdigit())
+                        ] + uppdaterad_lista
                         st.session_state.edit_arskurs = None
                         rerun()
                 with col2:
@@ -92,22 +98,10 @@ if st.session_state.klasser:
             col_klasser = st.columns(len(kl_list))
             for i, klass in enumerate(kl_list):
                 with col_klasser[i]:
-                    st.markdown(f"`{klass}`")
+                    st.markdown(f"<span style='font-size: 0.9em;'>{klass}</span>", unsafe_allow_html=True)
             if st.button(f"✏️ Redigera årskurs {ar}", key=f"edit_knapp_{ar}"):
                 st.session_state.edit_arskurs = ar
 
-# --- Skapa dynamisk lista med årskurser baserat på inlagda klasser ---
-alla_ar = sorted(set(k[0] for k in st.session_state.klasser if k and k[0].isdigit()))
-
-# Säkerställ att timplan finns för dessa årskurser
-if "timplan" not in st.session_state:
-    st.session_state.timplan = {amne: {ar: 120 for ar in alla_ar} for amne in amnen}
-else:
-    # Lägg till eventuellt saknade årskurser i befintlig timplan
-    for amne in amnen:
-        for ar in alla_ar:
-            if ar not in st.session_state.timplan[amne]:
-                st.session_state.timplan[amne][ar] = 120
 
 
 
