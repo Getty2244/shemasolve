@@ -422,5 +422,45 @@ if uploaded_file is not None:
         st.success("✅ Data inläst! Ladda om sidan för att se uppdateringarna.")
     except Exception as e:
         st.error(f"Fel vid inläsning: {e}")
+# --- Spara och ladda data med profilnamn ---
+st.header("💾 Spara / Ladda schema")
+
+import pickle
+import base64
+
+keys_to_save = [
+    "klasser", "larare", "farg_val", "farg_saved_val", "timplan",
+    "salar", "daginst", "generated_schema"
+]
+
+profilnamn = st.text_input("Ange ett profilnamn (t.ex. skolans namn eller initialer)", value="min_skola")
+
+col1, col2 = st.columns([1, 1])
+
+with col1:
+    if st.button("💾 Spara konfiguration"):
+        if profilnamn.strip():
+            filnamn = f"{profilnamn.strip()}_schema.pkl"
+            data_to_save = {k: st.session_state.get(k) for k in keys_to_save}
+            with open(filnamn, "wb") as f:
+                pickle.dump(data_to_save, f)
+            with open(filnamn, "rb") as f:
+                b64 = base64.b64encode(f.read()).decode()
+                href = f'<a href="data:file/pkl;base64,{b64}" download="{filnamn}">⬇️ Klicka här för att ladda ner "{filnamn}"</a>'
+                st.markdown(href, unsafe_allow_html=True)
+        else:
+            st.warning("Vänligen ange ett profilnamn innan du sparar.")
+
+with col2:
+    uploaded_file = st.file_uploader("📁 Ladda in en tidigare sparad fil", type=["pkl"])
+    if uploaded_file is not None:
+        try:
+            loaded_data = pickle.load(uploaded_file)
+            for k in keys_to_save:
+                if k in loaded_data:
+                    st.session_state[k] = loaded_data[k]
+            st.success("✅ Data inläst! Ladda om sidan för att se uppdateringarna.")
+        except Exception as e:
+            st.error(f"Fel vid inläsning: {e}")
 
 
