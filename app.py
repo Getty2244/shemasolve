@@ -222,14 +222,16 @@ st.header("4.5 Salar")
 if "val_sal_typ" not in st.session_state:
     st.session_state.val_sal_typ = "Hemklassrum"
 
+# Flytta radioknappen utanför formuläret så den uppdaterar UI direkt
+st.session_state.val_sal_typ = st.radio(
+    "Typ av sal",
+    ["Hemklassrum", "Ämnesklassrum"],
+    horizontal=True,
+    index=0 if st.session_state.val_sal_typ == "Hemklassrum" else 1
+)
+
 with st.form("sal_form", clear_on_submit=True):
     salnamn = st.text_input("Salens namn (t.ex. B203)")
-    st.radio(
-        "Typ av sal",
-        ["Hemklassrum", "Ämnesklassrum"],
-        horizontal=True,
-        key="val_sal_typ"
-    )
 
     if st.session_state.val_sal_typ == "Hemklassrum":
         kopplat_klass = st.selectbox("Kopplat till klass", st.session_state.klasser)
@@ -247,7 +249,6 @@ with st.form("sal_form", clear_on_submit=True):
                 "ämne": kopplat_amne
             })
             st.success(f"Sal {salnamn} tillagd!")
-
 
 
 
