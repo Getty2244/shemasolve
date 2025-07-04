@@ -91,24 +91,22 @@ if st.session_state.klasser:
 
 
 
-# --- Steg 1: Färgval ---
+# --- Steg 1: Färgval per ämne ---
 st.header("1. Färgval per ämne")
 with st.form("farg_form"):
     farg_input = {}
     for amne in amnen:
         col1, col2 = st.columns([3, 1])
         with col1:
-            farg_input[amne] = st.color_picker(amne, value=st.session_state.farg_val[amne], key=f"farg_{amne}")
+            farg_input[amne] = st.color_picker(amne, value=st.session_state.farg_val.get(amne, "#FFFFFF"), key=f"farg_{amne}")
         with col2:
-            hexkod = farg_input[amne]
-            st.markdown(f"`{hexkod}`")
+            st.markdown(f"`{farg_input[amne]}`")
     if st.form_submit_button("Spara färger"):
         for amne in amnen:
-            old = st.session_state.farg_val[amne]
-            new = farg_input[amne]
-            st.session_state.farg_val[amne] = new
-            st.session_state.farg_saved_val[amne] = new
+            st.session_state.farg_val[amne] = farg_input[amne]
+            st.session_state.farg_saved_val[amne] = farg_input[amne]
         st.success("Färger sparade!")
+
 
 # --- Steg 2: Lärare ---
 st.header("2. Lärare")
@@ -131,7 +129,8 @@ with st.form("add_larare", clear_on_submit=True):
             })
             st.success(f"Lärare {lid} tillagd!")
 
-# --- Steg 3: Timplan ---
+
+# --- Steg 3: Lokal timplan ---
 st.header("3. Lokal timplan")
 with st.form("timplan_form"):
     for amne in amnen:
@@ -144,9 +143,6 @@ with st.form("timplan_form"):
     if st.form_submit_button("Spara timplan"):
         st.success("Timplan sparad!")
 
-# --- Resterande steg (4-7) ---
-# Vill du att jag inkluderar salar, daginst, schemagenerering och vy/export direkt nu?
-# Säg bara till så skickar jag allt med samma tillägg för klasser.
 
 # --- Steg 4: Salar ---
 st.header("4. Salar")
