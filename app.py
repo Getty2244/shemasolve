@@ -204,37 +204,31 @@ with st.form("timplan_form"):
     if st.form_submit_button("Spara timplan"):
         st.success("Timplan sparad!")
 
-# --- Steg 4: Salar ---
-st.header("4. Salar")
-saltyp = st.radio("Typ av sal", options=["Hemklassrum", "Ämnesklassrum"], horizontal=True, key="saltyp_val")
+# --- Steg 4: Lokal timplan ---
+st.header("4. Lokal timplan")
 
-with st.form("sal_form", clear_on_submit=True):
-    namn = st.text_input("Salnamn")
-    sal_klass = sal_amne = None
+# 🧠 Viktigt: skapa listan med årskurser från klasserna
+alla_ar = sorted(set(k[0] for k in st.session_state.klasser if k and k[0].isdigit()))
 
-    if saltyp == "Hemklassrum":
-        sal_klass = st.selectbox("Tilldelad klass", st.session_state.klasser)
-    else:
-        sal_amne = st.selectbox("Tilldelat ämne", st.session_state.amnen)
+# Se till att alla ämnen har timplan-data per årskurs
+for amne in st.session_state.amnen:
+    if amne not in st.session_state.timplan:
+        st.session_state.timplan[amne] = {}
+    for ar in alla_ar:
+        if ar not in st.session_state.timplan[amne]:
+            st.session_state.timplan[amne][ar] = 120  # standardvärde
 
-    if st.form_submit_button("➕ Lägg till sal"):
-        st.session_state.salar.append({
-            "sal": namn,
-            "typ": saltyp,
-            "klass": sal_klass,
-            "ämne": sal_amne
-        })
-        st.success(f"Sal {namn} tillagd!")
+with st.form("timplan_form"):
+    for amne in st.session_state.amnen:
+        st.markdown(f"**{amne}**")
+        cols = st.columns(len(alla_ar))
+        for i, ar in enumerate(alla_ar):
+            st.session_state.timplan[amne][ar] = cols[i].number_input(
+                f"Åk {ar}", value=st.session_state.timplan[amne][ar], step=10, key=f"tp_{amne}_{ar}"
+            )
+    if st.form_submit_button("Spara timplan"):
+        st.success("Timplan sparad!")
 
-st.subheader("📋 Inlagda salar")
-for i, s in enumerate(st.session_state.salar):
-    col1, col2 = st.columns([6, 1])
-    with col1:
-        st.markdown(f"**{s['sal']}** – {s['typ']} – {s.get('klass') or s.get('ämne')}")
-    with col2:
-        if st.button("🗑️ Ta bort", key=f"del_sal_{i}"):
-            st.session_state.salar.pop(i)
-            st.rerun()
 
 # --- Steg 5: Inställningar för skoldagen ---
 st.header("5. Inställningar för skoldagen")
