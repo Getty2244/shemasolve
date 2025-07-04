@@ -4,39 +4,54 @@ import random
 import datetime
 import pickle
 import base64
-from collections import defaultdict
 import io
 
 st.set_page_config(page_title="SchemaSolve", layout="wide")
 
-# Initiera session_state
-if "larare" not in st.session_state:
-    st.session_state.larare = []
-if "farg_val" not in st.session_state:
-    st.session_state.farg_val = {"SO": "#FFD700", "ENG": "#87CEEB", "MA": "#90EE90"}
-if "farg_saved_val" not in st.session_state:
-    st.session_state.farg_saved_val = st.session_state.farg_val.copy()
-if "timplan" not in st.session_state:
-    st.session_state.timplan = {}
-if "salar" not in st.session_state:
-    st.session_state.salar = []
-if "daginst" not in st.session_state:
-    st.session_state.daginst = {
+# --- Initiera session_state ---
+def init_state():
+    st.session_state.setdefault("amnen", ["SO", "ENG", "MA"])
+    st.session_state.setdefault("klasser", ["7a", "7b", "8a", "8b", "9a", "9b"])
+    st.session_state.setdefault("larare", [])
+    st.session_state.setdefault("farg_val", {amne: "#FFFFFF" for amne in st.session_state.amnen})
+    st.session_state.setdefault("farg_saved_val", st.session_state.farg_val.copy())
+    st.session_state.setdefault("timplan", {amne: {} for amne in st.session_state.amnen})
+    st.session_state.setdefault("salar", [])
+    st.session_state.setdefault("daginst", {
         "starttid": datetime.time(8, 0),
         "sluttider": {dag: datetime.time(15, 0) for dag in ["Mon", "Tue", "Wed", "Thu", "Fri"]}
-    }
+    })
 
-# Globala listor
+init_state()
+
+# --- Globala listor ---
 dagar = ["Mon", "Tue", "Wed", "Thu", "Fri"]
-amnen = ["SO", "ENG", "MA"]
 
-# --- Steg 0: Klasser ---
-st.header("0. Klasser")
-if "klasser" not in st.session_state:
-    st.session_state.klasser = ["7a", "7b", "8a", "8b", "9a", "9b"]
+# --- Steg 0: Lägg till ämnen ---
+st.header("0. Ämnen")
+with st.form("add_subject", clear_on_submit=True):
+    ny_amne = st.text_input("Lägg till nytt ämne")
+    if st.form_submit_button("➕ Lägg till ämne") and ny_amne:
+        if ny_amne not in st.session_state.amnen:
+            st.session_state.amnen.append(ny_amne)
+            st.session_state.farg_val[ny_amne] = "#FFFFFF"
+            st.rerun()
+
+if st.session_state.amnen:
+    for i, amne in enumerate(st.session_state.amnen):
+        col1, col2 = st.columns([5, 1])
+        col1.markdown(f"- {amne}")
+        if col2.button("🗑️", key=f"del_amne_{i}"):
+            st.session_state.amnen.remove(amne)
+            st.session_state.farg_val.pop(amne, None)
+            st.session_state.farg_saved_val.pop(amne, None)
+            st.session_state.timplan.pop(amne, None)
+            st.rerun()
+
+# --- Steg 1: Klasser ---
+st.header("1. Klasser")
 if "edit_arskurs" not in st.session_state:
     st.session_state.edit_arskurs = None
-
 with st.form("klass_form", clear_on_submit=True):
     ny_klass = st.text_input("Lägg till ny klass")
     if st.form_submit_button("➕ Lägg till klass"):
@@ -52,7 +67,6 @@ if st.session_state.klasser:
             grupper.setdefault(k[0], []).append(k)
         else:
             grupper.setdefault("Övrigt", []).append(k)
-
     for ar, kl_list in grupper.items():
         st.markdown(f"**Årskurs {ar}:**")
         if st.session_state.edit_arskurs == ar:
@@ -85,32 +99,24 @@ if st.session_state.klasser:
                 st.session_state.edit_arskurs = ar
                 st.rerun()
 
-alla_ar = sorted(set(k[0] for k in st.session_state.klasser if k and k[0].isdigit()))
-for amne in amnen:
-    if amne not in st.session_state.timplan:
-        st.session_state.timplan[amne] = {}
-    for ar in alla_ar:
-        if ar not in st.session_state.timplan[amne]:
-            st.session_state.timplan[amne][ar] = 120
-
-# --- Steg 1: Färgval per ämne ---
-st.header("1. Färgval per ämne")
+# --- Steg 2: Färgval ---
+st.header("2. Färgval per ämne")
 with st.form("farg_form"):
     farg_input = {}
-    for amne in amnen:
+    for amne in st.session_state.amnen:
         col1, col2 = st.columns([3, 1])
         with col1:
             farg_input[amne] = st.color_picker(amne, value=st.session_state.farg_val.get(amne, "#FFFFFF"), key=f"farg_{amne}")
         with col2:
             st.markdown(f"`{farg_input[amne]}`")
     if st.form_submit_button("Spara färger"):
-        for amne in amnen:
+        for amne in st.session_state.amnen:
             st.session_state.farg_val[amne] = farg_input[amne]
             st.session_state.farg_saved_val[amne] = farg_input[amne]
         st.success("Färger sparade!")
 
-# --- Steg 2: Lärare ---
-st.header("2. Lärare")
+# --- Steg 3: Lärare ---
+st.header("3. Lärare")
 if "edit_larare_index" not in st.session_state:
     st.session_state.edit_larare_index = None
 
@@ -120,7 +126,7 @@ if st.session_state.edit_larare_index is not None:
     st.subheader(f"✏️ Redigerar lärare: {lar['id']}")
     with st.form("edit_larare_form"):
         lid = st.text_input("Lärar-ID", value=lar["id"])
-        amne = st.selectbox("Ämne", amnen, index=amnen.index(lar["ämne"]))
+        amne = st.selectbox("Ämne", st.session_state.amnen, index=st.session_state.amnen.index(lar["ämne"]))
         minuter = st.number_input("Minuter/vecka", min_value=10, step=10, value=lar["minuter"])
         kl = st.multiselect("Klasser", st.session_state.klasser, default=lar["klasser"])
         dag = st.multiselect("Arbetsdagar", dagar, default=lar["dagar"])
@@ -146,7 +152,7 @@ if st.session_state.edit_larare_index is not None:
 else:
     with st.form("add_larare", clear_on_submit=True):
         lid = st.text_input("Lärar-ID")
-        amne = st.selectbox("Ämne", amnen)
+        amne = st.selectbox("Ämne", st.session_state.amnen)
         minuter = st.number_input("Minuter/vecka", min_value=10, step=10)
         kl = st.multiselect("Klasser", st.session_state.klasser)
         dag = st.multiselect("Arbetsdagar", dagar, default=dagar)
@@ -185,11 +191,10 @@ if st.session_state.larare:
                     st.rerun()
 else:
     st.info("Inga lärare inlagda ännu.")
-
 # --- Steg 3: Lokal timplan ---
 st.header("3. Lokal timplan")
 with st.form("timplan_form"):
-    for amne in amnen:
+    for amne in st.session_state.amnen:
         st.markdown(f"**{amne}**")
         cols = st.columns(len(alla_ar))
         for i, ar in enumerate(alla_ar):
@@ -201,7 +206,6 @@ with st.form("timplan_form"):
 
 # --- Steg 4: Salar ---
 st.header("4. Salar")
-
 saltyp = st.radio("Typ av sal", options=["Hemklassrum", "Ämnesklassrum"], horizontal=True, key="saltyp_val")
 
 with st.form("sal_form", clear_on_submit=True):
@@ -211,7 +215,7 @@ with st.form("sal_form", clear_on_submit=True):
     if saltyp == "Hemklassrum":
         sal_klass = st.selectbox("Tilldelad klass", st.session_state.klasser)
     else:
-        sal_amne = st.selectbox("Tilldelat ämne", amnen)
+        sal_amne = st.selectbox("Tilldelat ämne", st.session_state.amnen)
 
     if st.form_submit_button("➕ Lägg till sal"):
         st.session_state.salar.append({
@@ -224,7 +228,13 @@ with st.form("sal_form", clear_on_submit=True):
 
 st.subheader("📋 Inlagda salar")
 for i, s in enumerate(st.session_state.salar):
-    st.markdown(f"**{s['sal']}** – {s['typ']} – {s.get('klass') or s.get('ämne')}")
+    col1, col2 = st.columns([6, 1])
+    with col1:
+        st.markdown(f"**{s['sal']}** – {s['typ']} – {s.get('klass') or s.get('ämne')}")
+    with col2:
+        if st.button("🗑️ Ta bort", key=f"del_sal_{i}"):
+            st.session_state.salar.pop(i)
+            st.rerun()
 
 # --- Steg 5: Inställningar för skoldagen ---
 st.header("5. Inställningar för skoldagen")
@@ -325,7 +335,7 @@ if st.button("🗓️ Generera schema"):
     st.session_state.generated_schema = pd.DataFrame(lektioner)
     st.success("✅ Schema genererat!")
 
-# --- Steg 7: Visuell schemavy ---
+# --- Steg 7: Visuell schemavy + export ---
 st.header("7. Visuell schemavy")
 
 if "generated_schema" in st.session_state and not st.session_state.generated_schema.empty:
@@ -359,16 +369,8 @@ if "generated_schema" in st.session_state and not st.session_state.generated_sch
 else:
     st.info("Inget schema genererat ännu.")
 
-
-
-# --- Spara och ladda data med profilnamn ---
+# --- Spara / Ladda ---
 st.header("💾 Spara / Ladda schema")
-
-keys_to_save = [
-    "klasser", "larare", "farg_val", "farg_saved_val", "timplan",
-    "salar", "daginst", "generated_schema"
-]
-
 profilnamn = st.text_input("Ange ett profilnamn (t.ex. skolans namn eller initialer)", value="min_skola")
 col1, col2 = st.columns([1, 1])
 
@@ -376,7 +378,9 @@ with col1:
     if st.button("💾 Spara konfiguration"):
         if profilnamn.strip():
             filnamn = f"{profilnamn.strip()}_schema.pkl"
-            data_to_save = {k: st.session_state.get(k) for k in keys_to_save}
+            data_to_save = {k: st.session_state.get(k) for k in [
+                "klasser", "larare", "farg_val", "farg_saved_val", "timplan",
+                "salar", "daginst", "generated_schema", "amnen"]}
             with open(filnamn, "wb") as f:
                 pickle.dump(data_to_save, f)
             with open(filnamn, "rb") as f:
@@ -391,7 +395,7 @@ with col2:
     if uploaded_file is not None:
         try:
             loaded_data = pickle.load(uploaded_file)
-            for k in keys_to_save:
+            for k in ["klasser", "larare", "farg_val", "farg_saved_val", "timplan", "salar", "daginst", "generated_schema", "amnen"]:
                 if k in loaded_data:
                     st.session_state[k] = loaded_data[k]
             st.success("✅ Data inläst! Ladda om sidan för att se uppdateringarna.")
