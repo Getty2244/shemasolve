@@ -141,6 +141,32 @@ with st.form("add_larare", clear_on_submit=True):
             })
             st.success(f"Lärare {lid} tillagd!")
 
+# --- Steg 2b: Läraröversikt ---
+st.subheader("📋 Inlagda lärare")
+
+if st.session_state.larare:
+    for i, lar in enumerate(st.session_state.larare):
+        with st.expander(f"{lar['id']} ({lar['ämne']})", expanded=False):
+            st.markdown(f"- **Ämne:** {lar['ämne']}")
+            st.markdown(f"- **Minuter/vecka:** {lar['minuter']}")
+            st.markdown(f"- **Klasser:** {', '.join(lar['klasser'])}")
+            st.markdown(f"- **Arbetsdagar:** {', '.join(lar['dagar'])}")
+            if lar['önskemål']:
+                st.markdown(f"- **Önskemål:** {lar['önskemål']}")
+
+            col1, col2 = st.columns([1, 1])
+            with col1:
+                if st.button("✏️ Redigera", key=f"edit_larare_{i}"):
+                    st.warning("Redigeringsfunktion kommer snart.")
+            with col2:
+                if st.button("🗑️ Ta bort", key=f"delete_larare_{i}"):
+                    st.session_state.larare.pop(i)
+                    st.success("Lärare borttagen.")
+                    st.rerun()
+else:
+    st.info("Inga lärare inlagda ännu.")
+
+
 
 # --- Steg 3: Lokal timplan ---
 st.header("3. Lokal timplan")
