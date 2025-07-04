@@ -68,45 +68,38 @@ if st.session_state.klasser:
 
     for ar, kl_list in grupper.items():
         st.markdown(f"**Årskurs {ar}:**")
-
         if st.session_state.edit_arskurs == ar:
-            cols = st.columns(len(kl_list))
-            for i, klass in enumerate(kl_list):
-                with cols[i]:
-                    st.markdown(
-                        f"<div style='display: flex; align-items: center; gap: 4px;'>"
-                        f"<span style='font-size: 0.9em'>{klass}</span>"
-                        f"<button onClick='window.location.href=\"?delete_klass={klass}\"' style='border: none; background: none; cursor: pointer;'>🗑️</button>"
-                        f"</div>", unsafe_allow_html=True
-                    )
-            col1, col2 = st.columns([1, 1])
-            with col1:
-                if st.button("✅ Klar"):
-                    st.session_state.edit_arskurs = None
-                    rerun()
-            with col2:
-                if st.button("↩️ Avbryt"):
-                    st.session_state.edit_arskurs = None
-                    rerun()
+            with st.form(f"edit_form_{ar}"):
+                nya_klasser = []
+                col_klasser = st.columns(len(kl_list))
+                for i, klass in enumerate(kl_list):
+                    with col_klasser[i]:
+                        nya_namn = st.text_input("", value=klass, key=f"edit_{ar}_{i}")
+                        nya_klasser.append(nya_namn)
 
+                        if st.button("🗑️", key=f"del_{ar}_{i}"):
+                            if klass in st.session_state.klasser:
+                                st.session_state.klasser.remove(klass)
+                                rerun()
+
+                col1, col2 = st.columns([1, 1])
+                with col1:
+                    if st.form_submit_button("✅ Spara"):
+                        # Uppdatera namn
+                        for gammal, ny in zip(kl_list, nya_klasser):
+                            if ny != gammal and ny not in st.session_state.klasser:
+                                idx = st.session_state.klasser.index(gammal)
+                                st.session_state.klasser[idx] = ny
+                        st.session_state.edit_arskurs = None
+                        rerun()
+                with col2:
+                    if st.form_submit_button("↩️ Avbryt"):
+                        st.session_state.edit_arskurs = None
+                        rerun()
         else:
-            cols = st.columns(len(kl_list))
-            for i, klass in enumerate(kl_list):
-                with cols[i]:
-                    st.markdown(f"<span style='font-size: 0.9em'>{klass}</span>", unsafe_allow_html=True)
+            st.markdown(", ".join(f"`{klass}`" for klass in kl_list))
             if st.button(f"✏️ Redigera årskurs {ar}", key=f"edit_knapp_{ar}"):
                 st.session_state.edit_arskurs = ar
-
-# --- Hantera borttagning av klass via query param (fungerar i redigeringsläge) ---
-import urllib.parse
-query_params = st.experimental_get_query_params()
-if "delete_klass" in query_params:
-    klass_to_delete = query_params["delete_klass"][0]
-    if klass_to_delete in st.session_state.klasser:
-        st.session_state.klasser.remove(klass_to_delete)
-    # Rensa parametern efter borttagning
-    st.experimental_set_query_params()
-    rerun()
 
 
 
