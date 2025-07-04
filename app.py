@@ -216,6 +216,73 @@ with st.form("timplan_form"):
     if st.form_submit_button("Spara timplan"):
         st.success("Timplan sparad!")
 
+# --- Steg 5: Salar (lokaler) ---
+st.header("5. Salar (lokaler)")
+
+if "edit_salar_index" not in st.session_state:
+    st.session_state.edit_salar_index = None
+
+if st.session_state.edit_salar_index is not None:
+    i = st.session_state.edit_salar_index
+    sal = st.session_state.salar[i]
+    st.subheader(f"✏️ Redigerar sal: {sal['sal']}")
+    with st.form("edit_sal_form"):
+        namn = st.text_input("Salens namn", value=sal["sal"])
+        typ = st.selectbox("Typ", ["Hemklassrum", "Ämnesklassrum"], index=["Hemklassrum", "Ämnesklassrum"].index(sal["typ"]))
+        klass = st.selectbox("För klass (om hemklassrum)", st.session_state.klasser, index=st.session_state.klasser.index(sal.get("klass", st.session_state.klasser[0]))) if typ == "Hemklassrum" else None
+        amne = st.selectbox("För ämne (om ämnesklassrum)", st.session_state.amnen, index=st.session_state.amnen.index(sal.get("ämne", st.session_state.amnen[0]))) if typ == "Ämnesklassrum" else None
+        col1, col2 = st.columns([1, 1])
+        with col1:
+            if st.form_submit_button("💾 Spara"):
+                new_sal = {"sal": namn, "typ": typ}
+                if typ == "Hemklassrum":
+                    new_sal["klass"] = klass
+                else:
+                    new_sal["ämne"] = amne
+                st.session_state.salar[i] = new_sal
+                st.session_state.edit_salar_index = None
+                st.rerun()
+        with col2:
+            if st.form_submit_button("↩️ Avbryt"):
+                st.session_state.edit_salar_index = None
+else:
+    with st.form("add_salar", clear_on_submit=True):
+        namn = st.text_input("Salens namn")
+        typ = st.selectbox("Typ", ["Hemklassrum", "Ämnesklassrum"])
+        klass = st.selectbox("För klass (om hemklassrum)", st.session_state.klasser) if typ == "Hemklassrum" else None
+        amne = st.selectbox("För ämne (om ämnesklassrum)", st.session_state.amnen) if typ == "Ämnesklassrum" else None
+        if st.form_submit_button("➕ Lägg till sal"):
+            if namn:
+                ny_sal = {"sal": namn, "typ": typ}
+                if typ == "Hemklassrum":
+                    ny_sal["klass"] = klass
+                else:
+                    ny_sal["ämne"] = amne
+                st.session_state.salar.append(ny_sal)
+                st.success(f"Sal {namn} tillagd!")
+
+if st.session_state.salar:
+    st.subheader("🏫 Inlagda salar")
+    for i, sal in enumerate(st.session_state.salar):
+        with st.expander(f"{sal['sal']} ({sal['typ']})", expanded=False):
+            if sal["typ"] == "Hemklassrum":
+                st.markdown(f"- Klass: {sal['klass']}")
+            else:
+                st.markdown(f"- Ämne: {sal['ämne']}")
+            col1, col2 = st.columns([1, 1])
+            with col1:
+                if st.button("✏️ Redigera", key=f"edit_sal_{i}"):
+                    st.session_state.edit_salar_index = i
+                    st.rerun()
+            with col2:
+                if st.button("🗑️ Ta bort", key=f"delete_sal_{i}"):
+                    st.session_state.salar.pop(i)
+                    st.success("Sal borttagen.")
+                    st.rerun()
+else:
+    st.info("Inga salar inlagda ännu.")
+
+
 
 
 
