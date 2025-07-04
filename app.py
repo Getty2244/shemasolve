@@ -84,6 +84,18 @@ if st.session_state.klasser:
                 st.session_state.edit_arskurs = ar
                 st.rerun()
 
+# --- Mellanblock: Årskurser och timplan-synk ---
+alla_ar = sorted(set(k[0] for k in st.session_state.klasser if k and k[0].isdigit()))
+
+# Se till att alla ämnen har timplan-data för varje årskurs
+for amne in amnen:
+    if amne not in st.session_state.timplan:
+        st.session_state.timplan[amne] = {}
+    for ar in alla_ar:
+        if ar not in st.session_state.timplan[amne]:
+            st.session_state.timplan[amne][ar] = 120  # eller valfri standardtid
+
+
 
 
 
