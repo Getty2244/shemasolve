@@ -8,7 +8,7 @@ import io
 def rerun():
     raise RerunException(RerunData())
 
-# Ämnen och vardagar
+# Ämnen och veckodagar
 amnen = ["SO", "MA", "NO", "SV", "ENG", "IDROTT", "TRÄSLÖJD", "SY", "HK"]
 dagar = ["Mon", "Tue", "Wed", "Thu", "Fri"]
 
@@ -39,6 +39,7 @@ if "daginst" not in st.session_state:
         "rast_min": 5,
         "rast_max": 15
     }
+
 # --- Steg 0: Klasser ---
 st.header("0. Klasser")
 
