@@ -219,11 +219,10 @@ with st.form("timplan_form"):
 # --- Steg 4.5: Salar ---
 st.header("4.5 Salar")
 
-# Initiera om det inte finns
 if "val_sal_typ" not in st.session_state:
     st.session_state["val_sal_typ"] = "Hemklassrum"
 
-# Radio-knappen utanför formuläret med KEY
+# Typval utanför formulär för att undvika hopp
 st.radio(
     "Typ av sal",
     ["Hemklassrum", "Ämnesklassrum"],
@@ -251,6 +250,23 @@ with st.form("sal_form", clear_on_submit=True):
                 "ämne": kopplat_amne
             })
             st.success(f"Sal {salnamn} tillagd!")
+
+# Visa inlagda salar
+if st.session_state.salar:
+    st.subheader("📋 Inlagda salar")
+    for i, s in enumerate(st.session_state.salar):
+        with st.expander(f"{s['sal']} ({s['typ']})", expanded=False):
+            st.markdown(f"- **Typ:** {s['typ']}")
+            if s["typ"] == "Hemklassrum":
+                st.markdown(f"- **Klass:** {s['klass']}")
+            else:
+                st.markdown(f"- **Ämne:** {s['ämne']}")
+            if st.button("🗑️ Ta bort", key=f"ta_bort_sal_{i}"):
+                st.session_state.salar.pop(i)
+                st.rerun()
+else:
+    st.info("Inga salar tillagda ännu.")
+
 
 
 # --- Steg 5: Inställningar för skoldagen ---
