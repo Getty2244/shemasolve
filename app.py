@@ -1,60 +1,38 @@
 import streamlit as st
-from streamlit.runtime.scriptrunner import RerunException, RerunData
-import datetime
 import pandas as pd
 import random
-import io
+import datetime
+from collections import defaultdict
 
-def rerun():
-    raise RerunException(RerunData())
+st.set_page_config(page_title="SchemaSolve", layout="wide")
 
-# Ämnen och veckodagar
-amnen = ["SO", "MA", "NO", "SV", "ENG", "IDROTT", "TRÄSLÖJD", "SY", "HK"]
-dagar = ["Mon", "Tue", "Wed", "Thu", "Fri"]
-
-# Initiera session state
-if "klasser" not in st.session_state:
-    st.session_state.klasser = ["7a", "7b", "8a", "8b", "9a", "9b"]
-if "edit_arskurs" not in st.session_state:
-    st.session_state.edit_arskurs = None
-if "farg_val" not in st.session_state:
-    st.session_state.farg_val = {amne: "#FFFFFF" for amne in amnen}
-if "farg_saved_val" not in st.session_state:
-    st.session_state.farg_saved_val = {amne: None for amne in amnen}
-if "farg_changed" not in st.session_state:
-    st.session_state.farg_changed = {amne: False for amne in amnen}
+# Initiera session_state
 if "larare" not in st.session_state:
     st.session_state.larare = []
+if "farg_val" not in st.session_state:
+    st.session_state.farg_val = {"SO": "#FFD700", "ENG": "#87CEEB", "MA": "#90EE90"}
+if "farg_saved_val" not in st.session_state:
+    st.session_state.farg_saved_val = st.session_state.farg_val.copy()
+if "timplan" not in st.session_state:
+    st.session_state.timplan = {}
 if "salar" not in st.session_state:
     st.session_state.salar = []
 if "daginst" not in st.session_state:
-    default_start = datetime.time(8, 30)
-    default_end = {dag: datetime.time(15, 0) for dag in dagar}
     st.session_state.daginst = {
-        "starttid": default_start,
-        "sluttider": default_end,
-        "lunch": 40,
-        "lek_min": 40,
-        "lek_max": 60,
-        "rast_min": 5,
-        "rast_max": 15
+        "starttid": datetime.time(8, 0),
+        "sluttider": {dag: datetime.time(15, 0) for dag in ["Mon", "Tue", "Wed", "Thu", "Fri"]}
     }
 
-import streamlit as st
+dagar = ["Mon", "Tue", "Wed", "Thu", "Fri"]
+amnen = ["SO", "ENG", "MA"]
 
-# Behövs för att tvinga omstart efter redigering
-from streamlit.runtime.scriptrunner import RerunException, RerunData
-def rerun():
-    raise RerunException(RerunData())
+# --- Steg 0: Klasser ---
+st.header("0. Klasser")
 
-# Initiera klasser och tillstånd
 if "klasser" not in st.session_state:
     st.session_state.klasser = ["7a", "7b", "8a", "8b", "9a", "9b"]
 if "edit_arskurs" not in st.session_state:
     st.session_state.edit_arskurs = None
-
-# --- Steg 0: Klasser ---
-st.header("0. Klasser")
 
 # Lägg till ny klass
 with st.form("klass_form", clear_on_submit=True):
@@ -62,7 +40,7 @@ with st.form("klass_form", clear_on_submit=True):
     if st.form_submit_button("➕ Lägg till klass"):
         if ny_klass and ny_klass not in st.session_state.klasser:
             st.session_state.klasser.append(ny_klass)
-            rerun()
+            st.rerun()
 
 # Gruppvisning per årskurs
 if st.session_state.klasser:
@@ -76,42 +54,35 @@ if st.session_state.klasser:
 
     for ar, kl_list in grupper.items():
         st.markdown(f"**Årskurs {ar}:**")
-
         if st.session_state.edit_arskurs == ar:
             with st.form(f"edit_form_{ar}"):
-                cols = st.columns(len(kl_list))
                 nya_klasser = []
-                raderade_klasser = []
-
                 for i, klass in enumerate(kl_list):
-                    with cols[i]:
-                        nya = st.text_input(f"", value=klass, key=f"edit_{ar}_{i}")
-                        nya_klasser.append(nya)
-                        if st.button("🗑️", key=f"del_knapp_{ar}_{i}"):
-                            raderade_klasser.append(klass)
-
-                col1, col2 = st.columns(2)
-                with col1:
-                    if st.form_submit_button("✅ Spara"):
-                        for gammal, ny in zip(kl_list, nya_klasser):
-                            if gammal in raderade_klasser:
-                                st.session_state.klasser.remove(gammal)
-                            elif ny != gammal and ny not in st.session_state.klasser:
-                                idx = st.session_state.klasser.index(gammal)
-                                st.session_state.klasser[idx] = ny
-                        st.session_state.edit_arskurs = None
-                        rerun()
-                with col2:
-                    if st.form_submit_button("↩️ Avbryt"):
-                        st.session_state.edit_arskurs = None
-                        rerun()
-
-        else:
-            st.markdown(", ".join(f"`{klass}`" for klass in kl_list))
-            edit_knapp = st.button(f"✏️ Redigera årskurs {ar}", key=f"edit_knapp_{ar}")
-            if edit_knapp:
-                st.session_state.edit_arskurs = ar
+                    nya_klasser.append(st.text_input(f"Klass {i+1}", value=klass, key=f"edit_{ar}_{i}"))
+                if st.form_submit_button("✅ Spara ändringar"):
+                    for gammal, ny in zip(kl_list, nya_klasser):
+                        if ny != gammal and ny not in st.session_state.klasser:
+                            idx = st.session_state.klasser.index(gammal)
+                            st.session_state.klasser[idx] = ny
+                    st.session_state.edit_arskurs = None
+                    st.rerun()
+            if st.button("↩️ Avbryt", key=f"avbryt_{ar}"):
+                st.session_state.edit_arskurs = None
                 st.rerun()
+        else:
+            klassrad = ""
+            for i, klass in enumerate(kl_list):
+                del_key = f"del_knapp_{ar}_{i}"
+                col1, col2 = st.columns([10, 1])
+                with col1:
+                    klassrad += klass + (", " if i < len(kl_list) - 1 else "")
+                with col2:
+                    if st.button("🗑️", key=del_key):
+                        st.session_state.klasser.remove(klass)
+                        st.rerun()
+            st.markdown(klassrad)
+            if st.button(f"✏️ Redigera årskurs {ar}", key=f"edit_knapp_{ar}"):
+                st.session_state.edit_arskurs = ar
 
 
 
