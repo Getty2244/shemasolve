@@ -68,39 +68,45 @@ if st.session_state.klasser:
 
     for ar, kl_list in grupper.items():
         st.markdown(f"**Årskurs {ar}:**")
+
         if st.session_state.edit_arskurs == ar:
-            with st.form(f"edit_form_{ar}"):
-                cols = st.columns(len(kl_list))
-                nya_klasser = []
-                for i, klass in enumerate(kl_list):
-                    with cols[i]:
-                        nya_klasser.append(st.text_input("", value=klass, key=f"edit_{ar}_{i}"))
-                if len(nya_klasser) < len(kl_list):
-                    nya_klasser += kl_list[len(nya_klasser):]
-                col1, col2 = st.columns([1, 1])
-                with col1:
-                    if st.form_submit_button("✅ Spara"):
-                        uppdaterad_lista = []
-                        for ny in nya_klasser:
-                            if ny and ny not in uppdaterad_lista:
-                                uppdaterad_lista.append(ny)
-                        # Ta bort gamla klasser för årskursen
-                        st.session_state.klasser = [
-                            k for k in st.session_state.klasser if not (k[0] == ar if ar != "Övrigt" else not k[0].isdigit())
-                        ] + uppdaterad_lista
-                        st.session_state.edit_arskurs = None
-                        rerun()
-                with col2:
-                    if st.form_submit_button("↩️ Avbryt"):
-                        st.session_state.edit_arskurs = None
-                        rerun()
-        else:
-            col_klasser = st.columns(len(kl_list))
+            cols = st.columns(len(kl_list))
             for i, klass in enumerate(kl_list):
-                with col_klasser[i]:
-                    st.markdown(f"<span style='font-size: 0.9em;'>{klass}</span>", unsafe_allow_html=True)
+                with cols[i]:
+                    st.markdown(
+                        f"<div style='display: flex; align-items: center; gap: 4px;'>"
+                        f"<span style='font-size: 0.9em'>{klass}</span>"
+                        f"<button onClick='window.location.href=\"?delete_klass={klass}\"' style='border: none; background: none; cursor: pointer;'>🗑️</button>"
+                        f"</div>", unsafe_allow_html=True
+                    )
+            col1, col2 = st.columns([1, 1])
+            with col1:
+                if st.button("✅ Klar"):
+                    st.session_state.edit_arskurs = None
+                    rerun()
+            with col2:
+                if st.button("↩️ Avbryt"):
+                    st.session_state.edit_arskurs = None
+                    rerun()
+
+        else:
+            cols = st.columns(len(kl_list))
+            for i, klass in enumerate(kl_list):
+                with cols[i]:
+                    st.markdown(f"<span style='font-size: 0.9em'>{klass}</span>", unsafe_allow_html=True)
             if st.button(f"✏️ Redigera årskurs {ar}", key=f"edit_knapp_{ar}"):
                 st.session_state.edit_arskurs = ar
+
+# --- Hantera borttagning av klass via query param (fungerar i redigeringsläge) ---
+import urllib.parse
+query_params = st.experimental_get_query_params()
+if "delete_klass" in query_params:
+    klass_to_delete = query_params["delete_klass"][0]
+    if klass_to_delete in st.session_state.klasser:
+        st.session_state.klasser.remove(klass_to_delete)
+    # Rensa parametern efter borttagning
+    st.experimental_set_query_params()
+    rerun()
 
 
 
