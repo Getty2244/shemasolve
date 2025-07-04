@@ -351,30 +351,31 @@ if "generated_schema" in st.session_state and not st.session_state.generated_sch
     st.download_button("⬇️ Ladda ner som Excel", data=excel_data.getvalue(), file_name="schema.xlsx")
 else:
     st.info("Inget schema genererat ännu.")
-    # --- Steg 8: Statistik / Översikt ---
+
+# --- Steg 8: Statistik och översikt ---
 st.header("8. Statistik och översikt")
 
 if "generated_schema" in st.session_state and not st.session_state.generated_schema.empty:
     df = st.session_state.generated_schema.copy()
 
-    # Lektioner per klass
+    # 📚 Antal lektioner per klass
     st.subheader("📚 Antal lektioner per klass")
     klasser_count = df["klass"].value_counts().sort_index()
     st.bar_chart(klasser_count)
 
-    # Undervisningsminuter per lärare
-    st.subheader("👩‍🏫 Undervisningsminuter per lärare (beräknat från schema)")
-    df["minuter"] = 40  # antag 40 min per lektion
+    # 👩‍🏫 Undervisningsminuter per lärare
+    st.subheader("👩‍🏫 Undervisningsminuter per lärare (baserat på lektioner)")
+    df["minuter"] = 40  # Anta 40 min per lektion
     minuter_per_larare = df.groupby("lärare")["minuter"].sum()
     st.bar_chart(minuter_per_larare)
 
-    # Salanvändning
+    # 🏫 Salanvändning
     st.subheader("🏫 Salanvändning (antal lektioner)")
-    sal_count = df["sal"].value_counts()
+    sal_count = df["sal"].value_counts().sort_index()
     st.bar_chart(sal_count)
-
 else:
     st.info("Generera ett schema först för att se statistik.")
+
 
 
 # --- Spara / Ladda ---
