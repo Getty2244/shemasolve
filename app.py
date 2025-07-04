@@ -1,3 +1,4 @@
+# --- Import och funktioner ---
 import streamlit as st
 from streamlit.runtime.scriptrunner import RerunException, RerunData
 import datetime
@@ -8,55 +9,12 @@ import io
 def rerun():
     raise RerunException(RerunData())
 
-# --- Initiera data ---
-amnen = ["SO", "MA", "NO", "SV", "ENG", "IDROTT", "TRÄSLÖJD", "SY", "HK"]
-dagar = ["Mon", "Tue", "Wed", "Thu", "Fri"]
+# --- Steg 0: Klasser ---
+st.header("0. Klasser")
 
 if "klasser" not in st.session_state:
     st.session_state.klasser = ["7a", "7b", "8a", "8b", "9a", "9b"]
-if "farg_val" not in st.session_state:
-    st.session_state.farg_val = {amne: "#FFFFFF" for amne in amnen}
-if "farg_saved_val" not in st.session_state:
-    st.session_state.farg_saved_val = {amne: None for amne in amnen}
-if "farg_changed" not in st.session_state:
-    st.session_state.farg_changed = {amne: False for amne in amnen}
-if "larare" not in st.session_state:
-    st.session_state.larare = []
-if "red_larare" not in st.session_state:
-    st.session_state.red_larare = None
-if "salar" not in st.session_state:
-    st.session_state.salar = []
-if "red_salar" not in st.session_state:
-    st.session_state.red_salar = None
-if "red_klass" not in st.session_state:
-    st.session_state.red_klass = None
-if "daginst" not in st.session_state:
-    default_start = datetime.time(8, 30)
-    default_end = {dag: datetime.time(15, 0) for dag in dagar}
-    st.session_state.daginst = {
-        "starttid": default_start,
-        "sluttider": default_end,
-        "lunch": 40,
-        "lek_min": 40,
-        "lek_max": 60,
-        "rast_min": 5,
-        "rast_max": 15
-    }
 
-# Dynamiskt bygg timplan efter klasser
-aktuella_ar = sorted(set(k[0] for k in st.session_state.klasser if k[0].isdigit()))
-if "timplan" not in st.session_state:
-    st.session_state.timplan = {amne: {ar: 120 for ar in aktuella_ar} for amne in amnen}
-else:
-    for amne in amnen:
-        for ar in aktuella_ar:
-            if ar not in st.session_state.timplan[amne]:
-                st.session_state.timplan[amne][ar] = 120
-
-st.title("Skolplanerare")
-
-# --- Steg 0: Klasser ---
-st.header("0. Klasser")
 with st.form("klass_form", clear_on_submit=True):
     ny_klass = st.text_input("Lägg till ny klass")
     if st.form_submit_button("➕ Lägg till klass"):
@@ -64,30 +22,17 @@ with st.form("klass_form", clear_on_submit=True):
             st.session_state.klasser.append(ny_klass)
             rerun()
 
-st.subheader("📋 Inlagda klasser")
-for i, klass in enumerate(st.session_state.klasser):
-    col1, col2 = st.columns([6, 1])
-    with col1:
-        if st.session_state.red_klass == i:
-            with st.form(f"edit_klass_{i}"):
-                nytt_namn = st.text_input("Nytt klassnamn", klass, key=f"klass_edit_{i}")
-                col_a, col_b, col_c = st.columns(3)
-                if col_a.form_submit_button("💾 Spara"):
-                    st.session_state.klasser[i] = nytt_namn
-                    st.session_state.red_klass = None
-                    rerun()
-                if col_b.form_submit_button("↩️ Avbryt"):
-                    st.session_state.red_klass = None
-                    rerun()
-                if col_c.form_submit_button("🗑️ Ta bort"):
-                    st.session_state.klasser.pop(i)
-                    st.session_state.red_klass = None
-                    rerun()
-        else:
+if st.session_state.klasser:
+    st.markdown("**Inlagda klasser:**")
+    sorted_klasser = sorted(st.session_state.klasser)
+    cols = st.columns(len(sorted_klasser))
+    for i, klass in enumerate(sorted_klasser):
+        with cols[i]:
             st.markdown(f"**{klass}**")
-    with col2:
-        if st.button("✏️", key=f"editbtn_{i}"):
-            st.session_state.red_klass = i
+            if st.button("❌", key=f"del_{klass}"):
+                st.session_state.klasser.remove(klass)
+                rerun()
+
 
 
 # --- Steg 1: Färgval ---
