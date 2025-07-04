@@ -216,60 +216,38 @@ with st.form("timplan_form"):
     if st.form_submit_button("Spara timplan"):
         st.success("Timplan sparad!")
 
-# --- Steg 5.5: Salar ---
-st.header("5.5. Salar")
+# --- Steg 4.5: Salar ---
+st.header("4.5 Salar")
 
-if "salar" not in st.session_state:
-    st.session_state.salar = []
-
-# Spara valt saltyp i session_state så det inte nollställs varje gång
 if "val_sal_typ" not in st.session_state:
     st.session_state.val_sal_typ = "Hemklassrum"
 
 with st.form("sal_form", clear_on_submit=True):
-    ny_sal = st.text_input("Salsnamn (t.ex. A201)")
-
-    # RADIO-BUTTON för val av saltyp, sparas i session_state
-    sal_typ = st.radio(
+    salnamn = st.text_input("Salens namn (t.ex. B203)")
+    st.radio(
         "Typ av sal",
         ["Hemklassrum", "Ämnesklassrum"],
-        index=0 if st.session_state.val_sal_typ == "Hemklassrum" else 1,
         horizontal=True,
         key="val_sal_typ"
     )
 
-    # Visa fält beroende på typ
     if st.session_state.val_sal_typ == "Hemklassrum":
-        sal_klass = st.selectbox("Tillhör klass", st.session_state.klasser)
-        sal_data = {"sal": ny_sal, "typ": "Hemklassrum", "klass": sal_klass}
+        kopplat_klass = st.selectbox("Kopplat till klass", st.session_state.klasser)
+        kopplat_amne = None
     else:
-        sal_amne = st.selectbox("Tillhör ämne", st.session_state.amnen)
-        sal_data = {"sal": ny_sal, "typ": "Ämnesklassrum", "ämne": sal_amne}
+        kopplat_amne = st.selectbox("Kopplat till ämne", st.session_state.amnen)
+        kopplat_klass = None
 
     if st.form_submit_button("➕ Lägg till sal"):
-        if ny_sal and not any(s["sal"] == ny_sal for s in st.session_state.salar):
-            st.session_state.salar.append(sal_data)
-            st.success(f"Sal {ny_sal} tillagd!")
-            st.rerun()
-        else:
-            st.warning("Salsnamn saknas eller redan inlagd.")
+        if salnamn:
+            st.session_state.salar.append({
+                "sal": salnamn,
+                "typ": st.session_state.val_sal_typ,
+                "klass": kopplat_klass,
+                "ämne": kopplat_amne
+            })
+            st.success(f"Sal {salnamn} tillagd!")
 
-# Lista inlagda salar
-st.subheader("📋 Inlagda salar")
-if st.session_state.salar:
-    for i, s in enumerate(st.session_state.salar):
-        with st.expander(f"{s['sal']} ({s['typ']})"):
-            if s["typ"] == "Hemklassrum":
-                st.markdown(f"- **Typ:** Hemklassrum")
-                st.markdown(f"- **Tillhör klass:** {s['klass']}")
-            else:
-                st.markdown(f"- **Typ:** Ämnesklassrum")
-                st.markdown(f"- **Tillhör ämne:** {s['ämne']}")
-            if st.button("🗑️ Ta bort", key=f"del_sal_{i}"):
-                st.session_state.salar.pop(i)
-                st.rerun()
-else:
-    st.info("Inga salar inlagda ännu.")
 
 
 
