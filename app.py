@@ -55,6 +55,7 @@ if st.session_state.klasser:
     for ar, kl_list in grupper.items():
         st.markdown(f"**Årskurs {ar}:**")
         if st.session_state.edit_arskurs == ar:
+            # Redigeringsformulär
             with st.form(f"edit_form_{ar}"):
                 nya_klasser = []
                 cols = st.columns(len(kl_list))
@@ -62,7 +63,7 @@ if st.session_state.klasser:
                     with cols[i]:
                         ny_val = st.text_input(" ", value=klass, key=f"edit_{ar}_{i}")
                         nya_klasser.append(ny_val)
-                st.markdown("")  # för att skapa luft
+
                 if st.form_submit_button("✅ Spara ändringar"):
                     uppdaterade = []
                     for gammal, ny in zip(kl_list, nya_klasser):
@@ -75,24 +76,25 @@ if st.session_state.klasser:
                     st.session_state.klasser = list(set(st.session_state.klasser) - set(kl_list)) + uppdaterade
                     st.session_state.edit_arskurs = None
                     st.rerun()
+
                 if st.form_submit_button("↩️ Avbryt"):
                     st.session_state.edit_arskurs = None
                     st.rerun()
-                # Visa soptunnor för varje klass
-                st.markdown("Ta bort enskilda klasser:")
-                del_cols = st.columns(len(kl_list))
-                for i, klass in enumerate(kl_list):
-                    with del_cols[i]:
-                        if st.button("🗑️", key=f"del_knapp_{ar}_{i}"):
+
+            # Soptunnor (utanför formuläret)
+            st.markdown("🗑️ Klicka på soptunna för att ta bort klass:")
+            del_cols = st.columns(len(kl_list))
+            for i, klass in enumerate(kl_list):
+                with del_cols[i]:
+                    if st.button("🗑️", key=f"del_knapp_{ar}_{i}"):
+                        if klass in st.session_state.klasser:
                             st.session_state.klasser.remove(klass)
                             st.rerun()
         else:
-            # Visa klasser kommaseparerat
             st.markdown(", ".join(f"`{k}`" for k in kl_list))
             if st.button(f"✏️ Redigera årskurs {ar}", key=f"edit_knapp_{ar}"):
                 st.session_state.edit_arskurs = ar
                 st.rerun()
-
 
 
 
