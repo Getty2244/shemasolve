@@ -191,11 +191,19 @@ if st.session_state.larare:
                     st.rerun()
 else:
     st.info("Inga lärare inlagda ännu.")
-# --- Steg 3: Lokal timplan ---
-st.header("3. Lokal timplan")
+# --- Steg 4: Lokal timplan ---
+st.header("4. Lokal timplan")
 
-# FIX: Generera alla_ar innan vi använder den
+# Skapa lista med årskurser från klasser
 alla_ar = sorted(set(k[0] for k in st.session_state.klasser if k and k[0].isdigit()))
+
+# Initiera timplanen med standardvärden om de saknas
+for amne in st.session_state.amnen:
+    if amne not in st.session_state.timplan:
+        st.session_state.timplan[amne] = {}
+    for ar in alla_ar:
+        if ar not in st.session_state.timplan[amne]:
+            st.session_state.timplan[amne][ar] = 120
 
 with st.form("timplan_form"):
     for amne in st.session_state.amnen:
@@ -203,7 +211,7 @@ with st.form("timplan_form"):
         cols = st.columns(len(alla_ar))
         for i, ar in enumerate(alla_ar):
             st.session_state.timplan[amne][ar] = cols[i].number_input(
-                f"Åk {ar}", value=st.session_state.timplan[amne].get(ar, 120), step=10, key=f"tp_{amne}_{ar}"
+                f"Åk {ar}", value=st.session_state.timplan[amne][ar], step=10, key=f"tp_{amne}_{ar}"
             )
     if st.form_submit_button("Spara timplan"):
         st.success("Timplan sparad!")
