@@ -55,46 +55,34 @@ if st.session_state.klasser:
     for ar, kl_list in grupper.items():
         st.markdown(f"**Årskurs {ar}:**")
         if st.session_state.edit_arskurs == ar:
-            # Redigeringsformulär
-            with st.form(f"edit_form_{ar}"):
-                nya_klasser = []
-                cols = st.columns(len(kl_list))
-                for i, klass in enumerate(kl_list):
-                    with cols[i]:
-                        ny_val = st.text_input(" ", value=klass, key=f"edit_{ar}_{i}")
-                        nya_klasser.append(ny_val)
-
-                if st.form_submit_button("✅ Spara ändringar"):
-                    uppdaterade = []
-                    for gammal, ny in zip(kl_list, nya_klasser):
-                        if ny and ny not in st.session_state.klasser:
-                            idx = st.session_state.klasser.index(gammal)
-                            st.session_state.klasser[idx] = ny
-                            uppdaterade.append(ny)
-                        else:
-                            uppdaterade.append(gammal)
-                    st.session_state.klasser = list(set(st.session_state.klasser) - set(kl_list)) + uppdaterade
-                    st.session_state.edit_arskurs = None
-                    st.rerun()
-
-                if st.form_submit_button("↩️ Avbryt"):
-                    st.session_state.edit_arskurs = None
-                    st.rerun()
-
-            # Soptunnor (utanför formuläret)
-            st.markdown("🗑️ Klicka på soptunna för att ta bort klass:")
-            del_cols = st.columns(len(kl_list))
+            nya_klasser = []
+            cols = st.columns(len(kl_list))
             for i, klass in enumerate(kl_list):
-                with del_cols[i]:
-                    if st.button("🗑️", key=f"del_knapp_{ar}_{i}"):
+                with cols[i]:
+                    nya_klass = st.text_input(f"", value=klass, key=f"edit_{ar}_{i}")
+                    nya_klasser.append(nya_klass)
+                    if st.button("🗑️", key=f"del_{ar}_{i}"):
                         if klass in st.session_state.klasser:
                             st.session_state.klasser.remove(klass)
                             st.rerun()
+            col1, col2 = st.columns([1, 1])
+            with col1:
+                if st.button("✅ Spara ändringar", key=f"spara_{ar}"):
+                    for gammal, ny in zip(kl_list, nya_klasser):
+                        if ny != gammal and ny not in st.session_state.klasser:
+                            idx = st.session_state.klasser.index(gammal)
+                            st.session_state.klasser[idx] = ny
+                    st.session_state.edit_arskurs = None
+                    st.rerun()
+            with col2:
+                if st.button("↩️ Avbryt", key=f"avbryt_{ar}"):
+                    st.session_state.edit_arskurs = None
+                    st.rerun()
         else:
-            st.markdown(", ".join(f"`{k}`" for k in kl_list))
+            st.markdown(", ".join(kl_list))
             if st.button(f"✏️ Redigera årskurs {ar}", key=f"edit_knapp_{ar}"):
                 st.session_state.edit_arskurs = ar
-                st.rerun()
+
 
 
 
