@@ -389,18 +389,6 @@ if "generated_schema" in st.session_state and not st.session_state.generated_sch
 else:
     st.info("Inget schema genererat ännu.")
 
-# --- Spara och ladda data ---
-st.header("💾 Spara / Ladda schema")
-
-import pickle
-import base64
-
-# Lista över vilka keys i session_state som ska sparas
-keys_to_save = [
-    "klasser", "larare", "farg_val", "farg_saved_val", "timplan",
-    "salar", "daginst", "generated_schema"
-]
-
 
 # --- Spara och ladda data med profilnamn ---
 st.header("💾 Spara / Ladda schema")
