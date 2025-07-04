@@ -222,16 +222,29 @@ st.header("5.5. Salar")
 if "salar" not in st.session_state:
     st.session_state.salar = []
 
+# Spara valt saltyp i session_state så det inte nollställs varje gång
+if "val_sal_typ" not in st.session_state:
+    st.session_state.val_sal_typ = "Hemklassrum"
+
 with st.form("sal_form", clear_on_submit=True):
     ny_sal = st.text_input("Salsnamn (t.ex. A201)")
-    sal_typ = st.radio("Typ av sal", ["Hemklassrum", "Ämnesklassrum"], horizontal=True)
-    
-    if sal_typ == "Hemklassrum":
+
+    # RADIO-BUTTON för val av saltyp, sparas i session_state
+    sal_typ = st.radio(
+        "Typ av sal",
+        ["Hemklassrum", "Ämnesklassrum"],
+        index=0 if st.session_state.val_sal_typ == "Hemklassrum" else 1,
+        horizontal=True,
+        key="val_sal_typ"
+    )
+
+    # Visa fält beroende på typ
+    if st.session_state.val_sal_typ == "Hemklassrum":
         sal_klass = st.selectbox("Tillhör klass", st.session_state.klasser)
-        sal_data = {"sal": ny_sal, "typ": sal_typ, "klass": sal_klass}
+        sal_data = {"sal": ny_sal, "typ": "Hemklassrum", "klass": sal_klass}
     else:
         sal_amne = st.selectbox("Tillhör ämne", st.session_state.amnen)
-        sal_data = {"sal": ny_sal, "typ": sal_typ, "ämne": sal_amne}
+        sal_data = {"sal": ny_sal, "typ": "Ämnesklassrum", "ämne": sal_amne}
 
     if st.form_submit_button("➕ Lägg till sal"):
         if ny_sal and not any(s["sal"] == ny_sal for s in st.session_state.salar):
@@ -241,6 +254,7 @@ with st.form("sal_form", clear_on_submit=True):
         else:
             st.warning("Salsnamn saknas eller redan inlagd.")
 
+# Lista inlagda salar
 st.subheader("📋 Inlagda salar")
 if st.session_state.salar:
     for i, s in enumerate(st.session_state.salar):
@@ -256,7 +270,6 @@ if st.session_state.salar:
                 st.rerun()
 else:
     st.info("Inga salar inlagda ännu.")
-
 
 
 
