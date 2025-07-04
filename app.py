@@ -219,19 +219,21 @@ with st.form("timplan_form"):
 # --- Steg 4.5: Salar ---
 st.header("4.5 Salar")
 
-# Initiera typ om det inte finns
+# Initiera typ om den saknas
 if "val_sal_typ" not in st.session_state:
     st.session_state.val_sal_typ = "Hemklassrum"
 
+# Välj saltyp – utanför formulär för att spara val
+st.session_state.val_sal_typ = st.radio(
+    "Typ av sal",
+    ["Hemklassrum", "Ämnesklassrum"],
+    horizontal=True,
+    index=["Hemklassrum", "Ämnesklassrum"].index(st.session_state.val_sal_typ)
+)
+
+# Formulär för att lägga till sal
 with st.form("sal_form", clear_on_submit=True):
     salnamn = st.text_input("Salens namn (t.ex. B203)")
-
-    st.radio(
-        "Typ av sal",
-        ["Hemklassrum", "Ämnesklassrum"],
-        horizontal=True,
-        key="val_sal_typ"
-    )
 
     if st.session_state.val_sal_typ == "Hemklassrum":
         kopplat_klass = st.selectbox("Kopplat till klass", st.session_state.klasser)
