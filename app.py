@@ -401,27 +401,7 @@ keys_to_save = [
     "salar", "daginst", "generated_schema"
 ]
 
-# 🎒 Spara data till fil
-if st.button("💾 Spara konfiguration"):
-    data_to_save = {k: st.session_state.get(k) for k in keys_to_save}
-    with open("schema_data.pkl", "wb") as f:
-        pickle.dump(data_to_save, f)
-    with open("schema_data.pkl", "rb") as f:
-        b64 = base64.b64encode(f.read()).decode()
-        href = f'<a href="data:file/pkl;base64,{b64}" download="schema_data.pkl">⬇️ Klicka här för att ladda ner</a>'
-        st.markdown(href, unsafe_allow_html=True)
 
-# 📂 Ladda data från fil
-uploaded_file = st.file_uploader("📁 Ladda in en tidigare sparad fil", type=["pkl"])
-if uploaded_file is not None:
-    try:
-        loaded_data = pickle.load(uploaded_file)
-        for k in keys_to_save:
-            if k in loaded_data:
-                st.session_state[k] = loaded_data[k]
-        st.success("✅ Data inläst! Ladda om sidan för att se uppdateringarna.")
-    except Exception as e:
-        st.error(f"Fel vid inläsning: {e}")
 # --- Spara och ladda data med profilnamn ---
 st.header("💾 Spara / Ladda schema")
 
