@@ -122,24 +122,64 @@ with st.form("farg_form"):
 
 # --- Steg 2: Lärare ---
 st.header("2. Lärare")
-with st.form("add_larare", clear_on_submit=True):
-    lid = st.text_input("Lärar-ID")
-    amne = st.selectbox("Ämne", amnen)
-    minuter = st.number_input("Minuter/vecka", min_value=10, step=10)
-    kl = st.multiselect("Klasser", st.session_state.klasser)
-    dag = st.multiselect("Arbetsdagar", dagar, default=dagar)
-    onske = st.text_area("Önskemål (valfritt)")
-    if st.form_submit_button("Lägg till lärare"):
-        if lid and kl and minuter > 0:
-            st.session_state.larare.append({
-                "id": lid,
-                "ämne": amne,
-                "minuter": minuter,
-                "klasser": kl,
-                "dagar": dag,
-                "önskemål": onske.strip()
-            })
-            st.success(f"Lärare {lid} tillagd!")
+
+# Initiera redigeringsindex om det inte finns
+if "edit_larare_index" not in st.session_state:
+    st.session_state.edit_larare_index = None
+
+# Om redigering pågår – visa formulär för aktuell lärare
+if st.session_state.edit_larare_index is not None:
+    i = st.session_state.edit_larare_index
+    lar = st.session_state.larare[i]
+
+    st.subheader(f"✏️ Redigerar lärare: {lar['id']}")
+    with st.form("edit_larare_form"):
+        lid = st.text_input("Lärar-ID", value=lar["id"])
+        amne = st.selectbox("Ämne", amnen, index=amnen.index(lar["ämne"]))
+        minuter = st.number_input("Minuter/vecka", min_value=10, step=10, value=lar["minuter"])
+        kl = st.multiselect("Klasser", st.session_state.klasser, default=lar["klasser"])
+        dag = st.multiselect("Arbetsdagar", dagar, default=lar["dagar"])
+        onske = st.text_area("Önskemål (valfritt)", value=lar["önskemål"])
+
+        col1, col2 = st.columns([1, 1])
+        with col1:
+            if st.form_submit_button("💾 Spara ändringar"):
+                st.session_state.larare[i] = {
+                    "id": lid,
+                    "ämne": amne,
+                    "minuter": minuter,
+                    "klasser": kl,
+                    "dagar": dag,
+                    "önskemål": onske.strip()
+                }
+                st.session_state.edit_larare_index = None
+                st.success("Ändringar sparade.")
+                st.rerun()
+        with col2:
+            if st.form_submit_button("↩️ Avbryt"):
+                st.session_state.edit_larare_index = None
+                st.info("Redigering avbröts.")
+
+# Annars – visa formulär för att lägga till ny lärare
+else:
+    with st.form("add_larare", clear_on_submit=True):
+        lid = st.text_input("Lärar-ID")
+        amne = st.selectbox("Ämne", amnen)
+        minuter = st.number_input("Minuter/vecka", min_value=10, step=10)
+        kl = st.multiselect("Klasser", st.session_state.klasser)
+        dag = st.multiselect("Arbetsdagar", dagar, default=dagar)
+        onske = st.text_area("Önskemål (valfritt)")
+        if st.form_submit_button("Lägg till lärare"):
+            if lid and kl and minuter > 0:
+                st.session_state.larare.append({
+                    "id": lid,
+                    "ämne": amne,
+                    "minuter": minuter,
+                    "klasser": kl,
+                    "dagar": dag,
+                    "önskemål": onske.strip()
+                })
+                st.success(f"Lärare {lid} tillagd!")
 
 # --- Steg 2b: Läraröversikt ---
 st.subheader("📋 Inlagda lärare")
@@ -157,7 +197,8 @@ if st.session_state.larare:
             col1, col2 = st.columns([1, 1])
             with col1:
                 if st.button("✏️ Redigera", key=f"edit_larare_{i}"):
-                    st.warning("Redigeringsfunktion kommer snart.")
+                    st.session_state.edit_larare_index = i
+                    st.rerun()
             with col2:
                 if st.button("🗑️ Ta bort", key=f"delete_larare_{i}"):
                     st.session_state.larare.pop(i)
