@@ -54,18 +54,17 @@ if st.session_state.klasser:
 
     for ar, kl_list in grupper.items():
         st.markdown(f"**Årskurs {ar}:**")
-        
         if st.session_state.edit_arskurs == ar:
-            cols = st.columns(len(kl_list))
             nya_klasser = []
+            cols = st.columns(len(kl_list))
             for i, klass in enumerate(kl_list):
                 with cols[i]:
-                    nya = st.text_input("", value=klass, key=f"edit_{ar}_{i}")
-                    nya_klasser.append(nya)
-                    del_knapp = st.button("🗑️", key=f"del_{ar}_{i}")
-                    if del_knapp and klass in st.session_state.klasser:
-                        st.session_state.klasser.remove(klass)
-                        st.rerun()
+                    nya_klass = st.text_input("", value=klass, key=f"edit_{ar}_{i}")
+                    nya_klasser.append(nya_klass)
+                    if st.button("🗑️", key=f"del_{ar}_{i}"):
+                        if klass in st.session_state.klasser:
+                            st.session_state.klasser.remove(klass)
+                            st.rerun()
             col1, col2 = st.columns([1, 1])
             with col1:
                 if st.button("✅ Spara ändringar", key=f"spara_{ar}"):
@@ -83,6 +82,8 @@ if st.session_state.klasser:
             st.markdown(", ".join(kl_list))
             if st.button(f"✏️ Redigera årskurs {ar}", key=f"edit_knapp_{ar}"):
                 st.session_state.edit_arskurs = ar
+                st.rerun()
+
 
 
 
