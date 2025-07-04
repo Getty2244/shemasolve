@@ -300,8 +300,15 @@ if st.button("🗓️ Generera schema"):
         if key not in schemat:
             return True
         bokade = schemat[key]
+
+        # Tillåt parallella grupper, t.ex. 9a1 och 9a2 samtidigt
+        samma_klass_blockerad = any(
+            k == klass or k.startswith(klass) or klass.startswith(k)
+            for k in bokade["klass"]
+        )
+
         return not (
-            klass in bokade["klass"] or
+            samma_klass_blockerad or
             sal in bokade["sal"] or
             larare in bokade["larare"]
         )
@@ -367,6 +374,7 @@ if st.button("🗓️ Generera schema"):
 
     st.session_state.generated_schema = pd.DataFrame(lektioner)
     st.success("✅ Schema genererat!")
+
 
 # --- Steg 7: Visuell schemavy + export ---
 st.header("7. Visuell schemavy")
