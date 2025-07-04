@@ -3,6 +3,7 @@ from streamlit.runtime.scriptrunner import RerunException, RerunData
 import datetime
 import pandas as pd
 import random
+import io
 
 def rerun():
     raise RerunException(RerunData())
@@ -54,11 +55,8 @@ with st.form("farg_form"):
             farg_input[amne] = st.color_picker(amne, value=st.session_state.farg_val[amne], key=f"farg_{amne}")
         with col2:
             hexkod = farg_input[amne]
-            if st.session_state.farg_changed.get(amne, False):
-                st.markdown(f"`{hexkod}` ✔️")
-            else:
-                st.markdown(f"`{hexkod}`")
-    if st.form_submit_button("🗓️ Spara färger"):
+            st.markdown(f"`{hexkod}`")
+    if st.form_submit_button("Spara färger"):
         for amne in amnen:
             old = st.session_state.farg_val[amne]
             new = farg_input[amne]
@@ -76,7 +74,7 @@ with st.form("add_larare", clear_on_submit=True):
     kl = st.multiselect("Klasser", klasser)
     dag = st.multiselect("Arbetsdagar", dagar, default=dagar)
     onske = st.text_area("Önskemål (valfritt)")
-    if st.form_submit_button("➕ Lägg till lärare"):
+    if st.form_submit_button("Lägg till lärare"):
         if lid and kl and minuter > 0:
             st.session_state.larare.append({
                 "id": lid,
@@ -88,53 +86,16 @@ with st.form("add_larare", clear_on_submit=True):
             })
             st.success(f"Lärare {lid} tillagd!")
 
-st.subheader("📋 Inlagda lärare")
-for i, l in enumerate(st.session_state.larare):
-    if st.session_state.red_larare == i:
-        with st.form(f"edit_larare_{i}"):
-            lid = st.text_input("Lärar-ID", l["id"])
-            amne = st.selectbox("Ämne", amnen, index=amnen.index(l["ämne"]))
-            minuter = st.number_input("Minuter/vecka", value=l["minuter"], min_value=10, step=10)
-            kl = st.multiselect("Klasser", klasser, default=l["klasser"])
-            dag = st.multiselect("Arbetsdagar", dagar, default=l["dagar"])
-            onske = st.text_area("Önskemål", value=l["önskemål"])
-            col1, col2, col3 = st.columns(3)
-            if col1.form_submit_button("🗓️ Spara"):
-                st.session_state.larare[i] = {
-                    "id": lid,
-                    "ämne": amne,
-                    "minuter": minuter,
-                    "klasser": kl,
-                    "dagar": dag,
-                    "önskemål": onske.strip()
-                }
-                st.session_state.red_larare = None
-                rerun()
-            if col2.form_submit_button("↩️ Avbryt"):
-                st.session_state.red_larare = None
-                rerun()
-            if col3.form_submit_button("🚑 Ta bort"):
-                st.session_state.larare.pop(i)
-                st.session_state.red_larare = None
-                rerun()
-    else:
-        col1, col2 = st.columns([6, 1])
-        with col1:
-            st.markdown(f"**{l['id']} ({l['ämne']})** – {l['minuter']} min – Klasser: {', '.join(l['klasser'])}")
-        with col2:
-            if st.button("✏️", key=f"edit_larare_{i}"):
-                st.session_state.red_larare = i
-
 # --- Steg 3: Timplan ---
 st.header("3. Lokal timplan")
 with st.form("timplan_form"):
     for amne in amnen:
         st.markdown(f"**{amne}**")
         col7, col8, col9 = st.columns(3)
-        st.session_state.timplan[amne]["7"] = col7.number_input(f"Åk 7", value=st.session_state.timplan[amne]["7"], step=10)
-        st.session_state.timplan[amne]["8"] = col8.number_input(f"Åk 8", value=st.session_state.timplan[amne]["8"], step=10)
-        st.session_state.timplan[amne]["9"] = col9.number_input(f"Åk 9", value=st.session_state.timplan[amne]["9"], step=10)
-    if st.form_submit_button("🗓️ Spara timplan"):
+        st.session_state.timplan[amne]["7"] = col7.number_input(f"Åk 7", value=st.session_state.timplan[amne]["7"], step=10, key=f"tp_{amne}_7")
+        st.session_state.timplan[amne]["8"] = col8.number_input(f"Åk 8", value=st.session_state.timplan[amne]["8"], step=10, key=f"tp_{amne}_8")
+        st.session_state.timplan[amne]["9"] = col9.number_input(f"Åk 9", value=st.session_state.timplan[amne]["9"], step=10, key=f"tp_{amne}_9")
+    if st.form_submit_button("Spara timplan"):
         st.success("Timplan sparad!")
 
 # --- Steg 4: Salar ---
@@ -147,7 +108,7 @@ with st.form("sal_form", clear_on_submit=True):
         sal_klass = st.selectbox("Tilldelad klass", klasser)
     else:
         sal_amne = st.selectbox("Tilldelat ämne", amnen)
-    if st.form_submit_button("➕ Lägg till sal"):
+    if st.form_submit_button("Lägg till sal"):
         st.session_state.salar.append({
             "sal": namn,
             "typ": saltyp,
@@ -156,7 +117,7 @@ with st.form("sal_form", clear_on_submit=True):
         })
         st.success(f"Sal {namn} tillagd!")
 
-# --- Steg 5: Skoldagsinställningar ---
+# --- Steg 5: Inställningar för skoldagen ---
 st.header("5. Inställningar för skoldagen")
 with st.form("daginst_form"):
     starttid_str = st.text_input("Starttid (HH:MM)", value=st.session_state.daginst["starttid"].strftime("%H:%M"))
@@ -173,22 +134,14 @@ with st.form("daginst_form"):
         except:
             st.error("Fel format på tid.")
 
-# --- Steg 6: Schema och schemavy ---
-# (placera schemagenerering + visualisering här nedanför)
-# Om du vill kan jag skicka det som separat block nu.
-
-# --- Steg 6: Generera schema ---
+# --- Steg 6: Schemagenerering ---
 st.header("6. Generera schema")
-
-import pandas as pd
-import random
 
 if st.button("📅 Generera schema"):
     lektioner = []
     schemat = {}
-    dagar = ["Mon", "Tue", "Wed", "Thu", "Fri"]
-    tider = list(range(8, 17))  # timmar 08–16
-    max_per_dag = 5  # högre tak än tidigare
+    tider = list(range(8, 17))
+    max_per_dag = 5
 
     def är_ledig(dag, tid, klass, sal, larare):
         key = f"{dag}_{tid}"
@@ -201,8 +154,8 @@ if st.button("📅 Generera schema"):
             larare in bokade["larare"]
         )
 
-    dagräknare = {}  # larare -> dag -> antal lektioner
-    ämnesräknare = {}  # larare -> dag -> ämne -> antal
+    dagräknare = {}
+    ämnesräknare = {}
 
     for lar in st.session_state.larare:
         minuter_kvar = lar["minuter"]
@@ -227,7 +180,7 @@ if st.button("📅 Generera schema"):
                 continue
 
             if ämnesräknare[lar["id"]][dag].get(lar["ämne"], 0) >= 1:
-                continue  # helst bara en lektion i samma ämne per dag
+                continue
 
             klass = random.choice(lar["klasser"])
 
@@ -261,42 +214,39 @@ if st.button("📅 Generera schema"):
                 placerade += 1
 
     st.session_state.generated_schema = pd.DataFrame(lektioner)
-    st.success("✅ Schema genererat med spridning och begränsningar!")
+    st.success("✅ Schema genererat!")
 
-# --- Steg 7: Visuell schemavy ---
+# --- Steg 7: Visuell schemavy + export ---
 st.header("7. Visuell schemavy")
 
-if "generated_schema" not in st.session_state or st.session_state.generated_schema.empty:
-    st.info("Inget schema genererat ännu.")
-else:
+if "generated_schema" in st.session_state and not st.session_state.generated_schema.empty:
     df = st.session_state.generated_schema.copy()
 
     col1, col2 = st.columns([1, 2])
     with col1:
-        filtrera_typ = st.selectbox("Visa schema för:", ["Lärare", "Klass", "Sal"])
+        typ = st.selectbox("Visa schema för:", ["Lärare", "Klass", "Sal"])
     with col2:
-        if filtrera_typ == "Lärare":
+        if typ == "Lärare":
             val = st.selectbox("Välj lärare:", sorted(df["lärare"].unique()))
-            filtrerat = df[df["lärare"] == val]
-        elif filtrera_typ == "Klass":
+            df = df[df["lärare"] == val]
+        elif typ == "Klass":
             val = st.selectbox("Välj klass:", sorted(df["klass"].unique()))
-            filtrerat = df[df["klass"] == val]
+            df = df[df["klass"] == val]
         else:
             val = st.selectbox("Välj sal:", sorted(df["sal"].unique()))
-            filtrerat = df[df["sal"] == val]
+            df = df[df["sal"] == val]
 
-    if filtrerat.empty:
-        st.warning("Inga lektioner hittades.")
-    else:
-        filtrerat = filtrerat.sort_values(by=["dag", "start"])
+    df = df.sort_values(by=["dag", "start"])
 
-        def färgkodning(row):
-            f = st.session_state.farg_val.get(row["ämne"], "#FFFFFF")
-            return [f"background-color: {f}" if col == "ämne" else "" for col in row.index]
+    def färg_raden(row):
+        f = st.session_state.farg_val.get(row["ämne"], "#FFFFFF")
+        return [f"background-color: {f}"] * len(row)
 
-        st.dataframe(
-            filtrerat.style.apply(färgkodning, axis=1),
-            height=400,
-            use_container_width=True
-        )
+    st.dataframe(df.style.apply(färg_raden, axis=1), use_container_width=True, height=400)
 
+    # Exportknapp
+    excel_data = io.BytesIO()
+    df.to_excel(excel_data, index=False)
+    st.download_button("⬇️ Ladda ner som Excel", data=excel_data.getvalue(), file_name="schema.xlsx")
+else:
+    st.info("Inget schema genererat ännu.")
